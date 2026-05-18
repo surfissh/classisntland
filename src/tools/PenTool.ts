@@ -9,7 +9,7 @@ import type {
 import { useStore } from '@/store/useStore';
 import { nanoid } from 'nanoid';
 import { computePressure } from '@/utils/pressure';
-import type { ToolHandler } from './types';
+import type { ToolHandler, ToolPreview } from './types';
 
 interface PenState {
   currentId: string | null;
@@ -69,6 +69,18 @@ export const PenTool: ToolHandler = {
 
     state.points.push({ x: worldX, y: worldY, pressure: clamped });
     state.lastPoint = { x: worldX, y: worldY, time: now };
+  },
+
+  getPreview(): ToolPreview | null {
+    if (!state.currentId || state.points.length === 0) return null;
+    const settings = getPenSettings();
+    return {
+      type: 'pen',
+      points: state.points,
+      color: settings.color,
+      baseWidth: settings.baseWidth,
+      opacity: 0.8,
+    };
   },
 
   onPointerUp(_e, _worldX, _worldY, _camera) {

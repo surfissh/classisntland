@@ -168,9 +168,9 @@ const Toolbar = () => {
           </div>
         ))}
       </div>
-
+{/* 
       {isVertical && <div className="h-px w-6 bg-neutral-700 my-1" />}
-      {!isVertical && <div className="w-px h-6 bg-neutral-700 mx-1" />}
+      {!isVertical && <div className="w-px h-6 bg-neutral-700 mx-1" />} */}
 
       <div className={`flex items-center ${isVertical ? 'flex-col' : ''} gap-0.5`}>
         <UndoButton />
