@@ -9,17 +9,31 @@ import type { ToolHandler, ToolPreview } from './types';
 
 const HANDLE_SIZE = 8;
 const HIT_THRESHOLD = 6;
+const ROTATION_HANDLE_OFFSET = 22;
+const ROTATION_HANDLE_RADIUS = 8;
 
-type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
+type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'rotate';
+
+interface ElementOrigin {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+}
 
 interface DragState {
-  type: 'none' | 'drag' | 'resize' | 'marquee';
+  type: 'none' | 'drag' | 'resize' | 'marquee' | 'rotate';
   startX: number;
   startY: number;
   lastX: number;
   lastY: number;
   handlePos?: HandlePosition;
-  elementOrigins: { id: string; x: number; y: number; width: number; height: number }[];
+  startAngle?: number;
+  selectionCenterX?: number;
+  selectionCenterY?: number;
+  elementOrigins: ElementOrigin[];
   selectionOrigins: { x: number; y: number; width: number; height: number };
 }
 
@@ -121,8 +135,20 @@ function hitTestElement(worldX: number, worldY: number, element: WhiteboardEleme
 function hitTest(worldX: number, worldY: number): WhiteboardElement | null {
   const elements = getPageElements();
   for (let i = elements.length - 1; i >= 0; i--) {
-    if (hitTestElement(worldX, worldY, elements[i])) {
-      return elements[i];
+    const el = elements[i];
+    const rotation = el.rotation ?? 0;
+    let testX = worldX;
+    let testY = worldY;
+    if (rotation !== 0) {
+      const b = getElementBounds(el);
+      const cx = b.x + b.width / 2;
+      const cy = b.y + b.height / 2;
+      const ur = unrotatePoint(worldX, worldY, cx, cy, rotation);
+      testX = ur.x;
+      testY = ur.y;
+    }
+    if (hitTestElement(testX, testY, el)) {
+      return el;
     }
   }
   return null;
@@ -178,6 +204,67 @@ interface Handle {
   pos: HandlePosition;
 }
 
+function unrotatePoint(
+  px: number, py: number, cx: number, cy: number, rotation: number
+): { x: number; y: number } {
+  if (rotation === 0) return { x: px, y: py };
+  const rad = -rotation * Math.PI / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const dx = px - cx;
+  const dy = py - cy;
+  return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
+}
+
+function getRotatedElementBounds(el: WhiteboardElement): { x: number; y: number; width: number; height: number; cx: number; cy: number } {
+  const b = getElementBounds(el);
+  const cx = b.x + b.width / 2;
+  const cy = b.y + b.height / 2;
+  const rotation = el.rotation ?? 0;
+  if (rotation === 0) return { ...b, cx, cy };
+  const rad = rotation * Math.PI / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const corners = [
+    { x: b.x, y: b.y },
+    { x: b.x + b.width, y: b.y },
+    { x: b.x + b.width, y: b.y + b.height },
+    { x: b.x, y: b.y + b.height },
+  ];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const c of corners) {
+    const rx = cx + (c.x - cx) * cos - (c.y - cy) * sin;
+    const ry = cy + (c.x - cx) * sin + (c.y - cy) * cos;
+    minX = Math.min(minX, rx);
+    minY = Math.min(minY, ry);
+    maxX = Math.max(maxX, rx);
+    maxY = Math.max(maxY, ry);
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY, cx, cy };
+}
+
+function getRotatedSelectionBounds(
+  elements: WhiteboardElement[]
+): { x: number; y: number; width: number; height: number; cx: number; cy: number } | null {
+  if (elements.length === 0) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let sumCx = 0, sumCy = 0;
+  for (const el of elements) {
+    const rb = getRotatedElementBounds(el);
+    minX = Math.min(minX, rb.x);
+    minY = Math.min(minY, rb.y);
+    maxX = Math.max(maxX, rb.x + rb.width);
+    maxY = Math.max(maxY, rb.y + rb.height);
+    sumCx += rb.cx;
+    sumCy += rb.cy;
+  }
+  return {
+    x: minX, y: minY,
+    width: maxX - minX, height: maxY - minY,
+    cx: sumCx / elements.length, cy: sumCy / elements.length,
+  };
+}
+
 function getResizeHandles(bounds: { x: number; y: number; width: number; height: number }): Handle[] {
   const { x, y, width, height } = bounds;
   const mx = x + width / 2;
@@ -201,7 +288,9 @@ function hitTestHandle(
   worldX: number,
   worldY: number,
   bounds: { x: number; y: number; width: number; height: number },
-  zoom: number
+  zoom: number,
+  selectionCenterX?: number,
+  selectionCenterY?: number,
 ): HandlePosition | null {
   const handles = getResizeHandles(bounds);
   const size = HANDLE_SIZE / zoom;
@@ -216,6 +305,18 @@ function hitTestHandle(
       return h.pos;
     }
   }
+
+  if (selectionCenterX !== undefined && selectionCenterY !== undefined) {
+    const rotX = selectionCenterX;
+    const rotY = bounds.y - ROTATION_HANDLE_OFFSET / zoom;
+    const radius = ROTATION_HANDLE_RADIUS / zoom;
+    const dx = worldX - rotX;
+    const dy = worldY - rotY;
+    if (dx * dx + dy * dy <= radius * radius) {
+      return 'rotate';
+    }
+  }
+
   return null;
 }
 
@@ -266,35 +367,60 @@ function elementsInRect(
 export const SelectTool: ToolHandler = {
   onPointerDown(_e, worldX, worldY, camera) {
     const store = useStore.getState();
+
+    const selectedElements = store.getSelectedElements();
+    if (selectedElements.length > 0) {
+      const unrotatedBounds = getSelectionBounds(selectedElements);
+      const rotatedBounds = getRotatedSelectionBounds(selectedElements);
+
+      if (rotatedBounds) {
+        const handleHit = hitTestHandle(
+          worldX, worldY,
+          { x: rotatedBounds.x, y: rotatedBounds.y, width: rotatedBounds.width, height: rotatedBounds.height },
+          camera.zoom,
+          rotatedBounds.cx,
+          rotatedBounds.cy,
+        );
+
+        if (handleHit === 'rotate') {
+          state.type = 'rotate';
+          state.startX = worldX;
+          state.startY = worldY;
+          state.lastX = worldX;
+          state.lastY = worldY;
+          state.selectionCenterX = rotatedBounds.cx;
+          state.selectionCenterY = rotatedBounds.cy;
+          state.startAngle = Math.atan2(worldY - rotatedBounds.cy, worldX - rotatedBounds.cx);
+          state.elementOrigins = selectedElements.map((el) => {
+            const b = getElementBounds(el);
+            return { id: el.id, x: b.x, y: b.y, width: b.width, height: b.height, rotation: el.rotation ?? 0 };
+          });
+          return;
+        }
+
+        if (handleHit) {
+          state.type = 'resize';
+          state.startX = worldX;
+          state.startY = worldY;
+          state.lastX = worldX;
+          state.lastY = worldY;
+          state.handlePos = handleHit;
+          state.selectionOrigins = { ...unrotatedBounds! };
+          state.elementOrigins = selectedElements.map((el) => {
+            const b = getElementBounds(el);
+            return { id: el.id, x: b.x, y: b.y, width: b.width, height: b.height, rotation: el.rotation ?? 0 };
+          });
+          return;
+        }
+      }
+    }
+
     const hitElement = hitTest(worldX, worldY);
 
     if (hitElement) {
       const isAlreadySelected = store.selectedElementIds.includes(hitElement.id);
 
       if (isAlreadySelected) {
-        const selectedElements = store.getSelectedElements();
-
-        if (selectedElements.length > 0) {
-          const bounds = getSelectionBounds(selectedElements);
-          if (bounds) {
-            const handleHit = hitTestHandle(worldX, worldY, bounds, camera.zoom);
-            if (handleHit) {
-              state.type = 'resize';
-              state.startX = worldX;
-              state.startY = worldY;
-              state.lastX = worldX;
-              state.lastY = worldY;
-              state.handlePos = handleHit;
-              state.selectionOrigins = { ...bounds };
-              state.elementOrigins = selectedElements.map((el) => {
-                const b = getElementBounds(el);
-                return { id: el.id, x: b.x, y: b.y, width: b.width, height: b.height };
-              });
-              return;
-            }
-          }
-        }
-
         state.type = 'drag';
         state.startX = worldX;
         state.startY = worldY;
@@ -302,7 +428,7 @@ export const SelectTool: ToolHandler = {
         state.lastY = worldY;
         state.elementOrigins = store.getSelectedElements().map((el) => {
           const b = getElementBounds(el);
-          return { id: el.id, x: b.x, y: b.y, width: b.width, height: b.height };
+          return { id: el.id, x: b.x, y: b.y, width: b.width, height: b.height, rotation: el.rotation ?? 0 };
         });
         return;
       }
@@ -315,7 +441,7 @@ export const SelectTool: ToolHandler = {
       state.lastX = worldX;
       state.lastY = worldY;
       const b = getElementBounds(hitElement);
-      state.elementOrigins = [{ id: hitElement.id, x: b.x, y: b.y, width: b.width, height: b.height }];
+      state.elementOrigins = [{ id: hitElement.id, x: b.x, y: b.y, width: b.width, height: b.height, rotation: hitElement.rotation ?? 0 }];
       return;
     }
 
@@ -381,6 +507,27 @@ export const SelectTool: ToolHandler = {
           y: ny,
           width: nw,
           height: nh,
+        } as Partial<WhiteboardElement>);
+      }
+
+      return;
+    }
+
+    if (state.type === 'rotate') {
+      state.lastX = worldX;
+      state.lastY = worldY;
+
+      const cx = state.selectionCenterX!;
+      const cy = state.selectionCenterY!;
+      const currentAngle = Math.atan2(worldY - cy, worldX - cx);
+      const deltaAngle = currentAngle - state.startAngle!;
+      const deltaDeg = deltaAngle * 180 / Math.PI;
+
+      const store = useStore.getState();
+
+      for (const origin of state.elementOrigins) {
+        store.updateElement(origin.id, {
+          rotation: origin.rotation + deltaDeg,
         } as Partial<WhiteboardElement>);
       }
 

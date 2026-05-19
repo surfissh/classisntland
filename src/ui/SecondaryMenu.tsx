@@ -230,9 +230,18 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
             <div className="text-xs text-neutral-500">
               {selectedElementIds.length === 0
                 ? 'No element selected'
-                : 'Multiple elements selected'}
+                : `${selectedElementIds.length} elements selected`}
             </div>
           )}
+          <button
+            onClick={() => {
+              const pageElements = useStore.getState().elements[useStore.getState().currentPageId] || [];
+              useStore.getState().setSelectedElementIds(pageElements.map((e) => e.id));
+            }}
+            className="w-full py-1.5 rounded-lg bg-neutral-700 text-neutral-300 text-xs hover:bg-neutral-600 transition-colors"
+          >
+            Select All
+          </button>
         </>
       )}
 

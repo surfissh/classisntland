@@ -4,6 +4,7 @@ import Canvas, { registerTool } from '@/canvas/Canvas';
 import { getTool } from '@/tools';
 import type { ToolType } from '@/types';
 import Toolbar from '@/ui/Toolbar';
+import SelectionInspector from '@/ui/SelectionInspector';
 
 const ALL_TOOLS: ToolType[] = ['select', 'pen', 'eraser', 'rectangle', 'circle', 'arc', 'line', 'arrow'];
 
@@ -20,6 +21,7 @@ const App = () => {
     <div className="w-full h-full">
       <Canvas />
       <Toolbar />
+      <SelectionInspector />
     </div>
   );
 };

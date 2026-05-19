@@ -90,31 +90,31 @@ const Toolbar = () => {
   const showToolbar = settings.showToolbar;
 
   const positionClasses: Record<string, string> = {
-    top: 'top-0 left-0 right-0 flex-row',
-    bottom: 'bottom-0 left-0 right-0 flex-row',
-    left: 'left-0 top-0 bottom-0 flex-col',
-    right: 'right-0 top-0 bottom-0 flex-col',
+    top: 'top-0 flex-row',
+    bottom: 'bottom-0 flex-row',
+    left: 'left-0 flex-col',
+    right: 'right-0 flex-col',
   };
 
-  const fillClasses: Record<string, string> = {
-    top: 'w-full rounded-none',
-    bottom: 'w-full rounded-none',
-    left: 'h-full rounded-none',
-    right: 'h-full rounded-none',
+  const fillEdgeClasses: Record<string, string> = {
+    top: 'left-0 right-0 w-full rounded-none',
+    bottom: 'left-0 right-0 w-full rounded-none',
+    left: 'top-0 bottom-0 h-full rounded-none',
+    right: 'top-0 bottom-0 h-full rounded-none',
   };
 
-  const floatingClasses: Record<string, string> = {
-    top: 'w-auto rounded-xl mx-auto mt-2',
-    bottom: 'w-auto rounded-xl mx-auto mb-2',
-    left: 'h-auto rounded-xl my-auto ml-2',
-    right: 'h-auto rounded-xl my-auto mr-2',
+  const floatingEdgeClasses: Record<string, string> = {
+    top: 'left-1/2 -translate-x-1/2 w-auto rounded-xl mt-2',
+    bottom: 'left-1/2 -translate-x-1/2 w-auto rounded-xl mb-2',
+    left: 'top-1/2 -translate-y-1/2 h-auto rounded-xl ml-2',
+    right: 'top-1/2 -translate-y-1/2 h-auto rounded-xl mr-2',
   };
 
   const containerClass = `
     ${positionClasses[toolbarPosition] || positionClasses.bottom}
     ${toolbarMode === 'fill'
-      ? fillClasses[toolbarPosition] || fillClasses.bottom
-      : floatingClasses[toolbarPosition] || floatingClasses.bottom
+      ? fillEdgeClasses[toolbarPosition] || fillEdgeClasses.bottom
+      : floatingEdgeClasses[toolbarPosition] || floatingEdgeClasses.bottom
     }
   `;
 
@@ -139,8 +139,7 @@ const Toolbar = () => {
 
   const toolbarContent = (
     <>
-      <div className={`flex items-center ${isVertical ? 'flex-col' : ''} gap-0.5`}>
-        <UndoButton />
+      <div className={`flex items-center ${toolbarMode === 'fill' ? 'flex-1' : ''} ${isVertical ? 'flex-col' : ''} gap-0.5`}>
         <SaveButton />
         <button
           onClick={() => setShowSettings(true)}
@@ -177,9 +176,12 @@ const Toolbar = () => {
             )}
           </div>
         ))}
+        <UndoButton />
       </div>
 
-      <PageManager isVertical={isVertical} />
+      <div className={`flex items-center ${isVertical ? 'flex-col' : ''} ${toolbarMode === 'fill' ? 'flex-1 justify-end' : ''} gap-0.5`}>
+        <PageManager isVertical={isVertical} />
+      </div>
     </>
   );
 
@@ -192,11 +194,11 @@ const Toolbar = () => {
         `}
       >
         {isVertical ? (
-          <div className="flex flex-col items-center">
+          <div className={`flex flex-col items-center ${toolbarMode === 'fill' ? 'justify-center h-full w-full' : ''}`}>
             {toolbarContent}
           </div>
         ) : (
-          <div className={`flex items-center gap-1 ${toolbarMode === 'fill' ? 'justify-between w-full' : ''}`}>
+          <div className={`flex items-center gap-1 ${toolbarMode === 'fill' ? 'w-full' : 'justify-center'}`}>
             {toolbarContent}
           </div>
         )}

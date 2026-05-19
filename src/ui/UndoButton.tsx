@@ -5,7 +5,7 @@ const UndoButton = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPress = useRef(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const undo = useStore((s) => s.undo);
   const clearPage = useStore((s) => s.clearPage);
@@ -47,7 +47,7 @@ const UndoButton = () => {
   useEffect(() => {
     if (showConfirm) {
       const handler = (e: MouseEvent) => {
-        if (buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
+        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
           setShowConfirm(false);
         }
       };
@@ -60,9 +60,8 @@ const UndoButton = () => {
   }, [showConfirm]);
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <button
-        ref={buttonRef}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerLeave}

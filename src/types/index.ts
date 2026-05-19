@@ -30,6 +30,7 @@ export interface BaseElement {
   pageId: string;
   createdAt: number;
   userId: string;
+  rotation?: number;
 }
 
 export interface StrokeElement extends BaseElement {

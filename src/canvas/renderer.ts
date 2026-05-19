@@ -17,6 +17,8 @@ const HANDLE_BORDER = '#ffffff';
 const SELECTION_DASH = [6, 3];
 const ARROW_HEAD_LENGTH = 14;
 const ARROW_HEAD_ANGLE = Math.PI / 6;
+const ROTATION_HANDLE_OFFSET = 22;
+const ROTATION_HANDLE_RADIUS = 8;
 
 export type { ToolPreview };
 
@@ -44,12 +46,30 @@ function strokePen(ctx: CanvasRenderingContext2D, el: StrokeElement) {
   ctx.globalAlpha = el.style.opacity;
   ctx.strokeStyle = el.style.color;
 
+  const rotation = el.rotation ?? 0;
+  if (rotation !== 0) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of pts) {
+      if (p.x < minX) minX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y > maxY) maxY = p.y;
+    }
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotation * Math.PI / 180);
+    ctx.translate(-cx, -cy);
+  }
+
   if (pts.length === 1) {
     const w = pts[0].pressure * el.baseWidth;
     ctx.beginPath();
     ctx.arc(pts[0].x, pts[0].y, w / 2, 0, Math.PI * 2);
     ctx.fillStyle = el.style.color;
     ctx.fill();
+    if (rotation !== 0) ctx.restore();
     return;
   }
 
@@ -79,6 +99,8 @@ function strokePen(ctx: CanvasRenderingContext2D, el: StrokeElement) {
 
     ctx.stroke();
   }
+
+  if (rotation !== 0) ctx.restore();
 }
 
 function strokeShape(ctx: CanvasRenderingContext2D, el: ShapeElement) {
@@ -89,6 +111,16 @@ function strokeShape(ctx: CanvasRenderingContext2D, el: ShapeElement) {
   ctx.lineJoin = 'round';
 
   const { x, y, width: w, height: h } = el;
+
+  const rotation = el.rotation ?? 0;
+  if (rotation !== 0) {
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotation * Math.PI / 180);
+    ctx.translate(-cx, -cy);
+  }
 
   ctx.beginPath();
 
@@ -144,6 +176,7 @@ function strokeShape(ctx: CanvasRenderingContext2D, el: ShapeElement) {
       ctx.closePath();
       ctx.fillStyle = el.style.color;
       ctx.fill();
+      if (rotation !== 0) ctx.restore();
       return;
     }
   }
@@ -154,6 +187,8 @@ function strokeShape(ctx: CanvasRenderingContext2D, el: ShapeElement) {
   }
 
   ctx.stroke();
+
+  if (rotation !== 0) ctx.restore();
 }
 
 function drawBackgroundGrid(
@@ -184,19 +219,10 @@ function drawBackgroundGrid(
   }
 }
 
-function drawSelectionHandles(
-  ctx: CanvasRenderingContext2D,
-  el: WhiteboardElement,
-  camera: Camera,
-  cssW: number,
-  cssH: number,
-) {
-  let bx: number, by: number, bw: number, bh: number;
-
+function getElementBounds(el: WhiteboardElement): { x: number; y: number; width: number; height: number } {
   if (el.type === 'pen' && 'points' in el) {
-    const stroke = el as StrokeElement;
-    const pts = stroke.points;
-    if (pts.length === 0) return;
+    const pts = (el as StrokeElement).points;
+    if (pts.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const p of pts) {
       if (p.x < minX) minX = p.x;
@@ -204,26 +230,76 @@ function drawSelectionHandles(
       if (p.x > maxX) maxX = p.x;
       if (p.y > maxY) maxY = p.y;
     }
-    bx = minX;
-    by = minY;
-    bw = maxX - minX;
-    bh = maxY - minY;
-  } else {
-    const s = el as ShapeElement;
-    bx = Math.min(s.x, s.x + s.width);
-    by = Math.min(s.y, s.y + s.height);
-    bw = Math.abs(s.width);
-    bh = Math.abs(s.height);
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }
+  const s = el as ShapeElement;
+  const mx = Math.min(s.x, s.x + s.width);
+  const my = Math.min(s.y, s.y + s.height);
+  return { x: mx, y: my, width: Math.abs(s.width), height: Math.abs(s.height) };
+}
 
+function getElementCenter(el: WhiteboardElement): { cx: number; cy: number } {
+  const b = getElementBounds(el);
+  return { cx: b.x + b.width / 2, cy: b.y + b.height / 2 };
+}
+
+function getRotatedCorners(
+  el: WhiteboardElement
+): { corners: { x: number; y: number }[]; cx: number; cy: number } {
+  const b = getElementBounds(el);
+  const cx = b.x + b.width / 2;
+  const cy = b.y + b.height / 2;
+  const corners = [
+    { x: b.x, y: b.y },
+    { x: b.x + b.width, y: b.y },
+    { x: b.x + b.width, y: b.y + b.height },
+    { x: b.x, y: b.y + b.height },
+  ];
+  const rotation = el.rotation ?? 0;
+  if (rotation === 0) return { corners, cx, cy };
+  const rad = rotation * Math.PI / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return {
+    corners: corners.map((c) => ({
+      x: cx + (c.x - cx) * cos - (c.y - cy) * sin,
+      y: cy + (c.x - cx) * sin + (c.y - cy) * cos,
+    })),
+    cx,
+    cy,
+  };
+}
+
+function getRotatedBounds(el: WhiteboardElement): { x: number; y: number; width: number; height: number; cx: number; cy: number } {
+  const { corners } = getRotatedCorners(el);
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const c of corners) {
+    minX = Math.min(minX, c.x);
+    minY = Math.min(minY, c.y);
+    maxX = Math.max(maxX, c.x);
+    maxY = Math.max(maxY, c.y);
+  }
+  const b = getElementBounds(el);
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY, cx: b.x + b.width / 2, cy: b.y + b.height / 2 };
+}
+
+function drawSelectionBox(
+  ctx: CanvasRenderingContext2D,
+  bounds: { x: number; y: number; width: number; height: number },
+  camera: Camera,
+  cssW: number,
+  cssH: number,
+  centerX?: number,
+  centerY?: number,
+) {
   const offX = cssW / 2 - camera.x * camera.zoom;
   const offY = cssH / 2 - camera.y * camera.zoom;
   const z = camera.zoom;
 
-  const sLeft = bx * z + offX;
-  const sTop = by * z + offY;
-  const sRight = (bx + bw) * z + offX;
-  const sBottom = (by + bh) * z + offY;
+  const sLeft = bounds.x * z + offX;
+  const sTop = bounds.y * z + offY;
+  const sRight = (bounds.x + bounds.width) * z + offX;
+  const sBottom = (bounds.y + bounds.height) * z + offY;
 
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -252,7 +328,37 @@ function drawSelectionHandles(
     ctx.fillRect(h.x - HANDLE_SIZE / 2, h.y - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
   }
 
+  const rotHandleX = centerX !== undefined ? centerX * z + offX : (sLeft + sRight) / 2;
+  const rotHandleY = sTop - ROTATION_HANDLE_OFFSET;
+
+  ctx.beginPath();
+  ctx.moveTo(rotHandleX, sTop);
+  ctx.lineTo(rotHandleX, rotHandleY + ROTATION_HANDLE_RADIUS);
+  ctx.strokeStyle = HANDLE_COLOR;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(rotHandleX, rotHandleY, ROTATION_HANDLE_RADIUS, 0, Math.PI * 2);
+  ctx.fillStyle = HANDLE_BORDER;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(rotHandleX, rotHandleY, ROTATION_HANDLE_RADIUS - 1.5, 0, Math.PI * 2);
+  ctx.fillStyle = HANDLE_COLOR;
+  ctx.fill();
+
   ctx.restore();
+}
+
+function drawSelectionHandles(
+  ctx: CanvasRenderingContext2D,
+  el: WhiteboardElement,
+  camera: Camera,
+  cssW: number,
+  cssH: number,
+) {
+  const rb = getRotatedBounds(el);
+  drawSelectionBox(ctx, { x: rb.x, y: rb.y, width: rb.width, height: rb.height }, camera, cssW, cssH);
 }
 
 function drawPreview(ctx: CanvasRenderingContext2D, preview: ToolPreview) {
@@ -430,9 +536,25 @@ export function renderAll(
     }
   }
 
-  for (const el of elements) {
-    if (!selectedSet.has(el.id)) continue;
-    drawSelectionHandles(ctx, el, camera, cssW, cssH);
+  const selectedElements = elements.filter(el => selectedSet.has(el.id));
+
+  if (selectedElements.length === 1) {
+    drawSelectionHandles(ctx, selectedElements[0], camera, cssW, cssH);
+  } else if (selectedElements.length > 1) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    const centers: { cx: number; cy: number }[] = [];
+    for (const el of selectedElements) {
+      const rb = getRotatedBounds(el);
+      minX = Math.min(minX, rb.x);
+      minY = Math.min(minY, rb.y);
+      maxX = Math.max(maxX, rb.x + rb.width);
+      maxY = Math.max(maxY, rb.y + rb.height);
+      centers.push({ cx: rb.cx, cy: rb.cy });
+    }
+    const avgCx = centers.reduce((s, c) => s + c.cx, 0) / centers.length;
+    const avgCy = centers.reduce((s, c) => s + c.cy, 0) / centers.length;
+    const unionBounds = { x: minX, y: minY, width: maxX - minX, height: maxY - minY, cx: avgCx, cy: avgCy };
+    drawSelectionBox(ctx, { x: unionBounds.x, y: unionBounds.y, width: unionBounds.width, height: unionBounds.height }, camera, cssW, cssH, avgCx, avgCy);
   }
 
   if (toolPreview) {
