@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import useStore from '@/store/useStore';
 import type { ToolbarPosition, ToolbarMode } from '@/types';
 
@@ -28,10 +29,10 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
     };
   }, [onClose]);
 
-  const positions: ToolbarPosition[] = ['top', 'bottom', 'left', 'right', 'floating'];
-  const modes: ToolbarMode[] = ['fill', 'compact'];
+  const positions: ToolbarPosition[] = ['top', 'bottom', 'left', 'right'];
+  const modes: ToolbarMode[] = ['fill', 'floating'];
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center">
       <div
         ref={panelRef}
@@ -108,7 +109,8 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

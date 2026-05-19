@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import useStore from '@/store/useStore';
 import type { WhiteboardElement, StrokeElement } from '@/types';
 
@@ -175,7 +176,7 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
     };
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-center justify-center">
       <div
         ref={panelRef}
@@ -258,7 +259,8 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

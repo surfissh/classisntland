@@ -2,9 +2,9 @@ export type ToolType = 'select' | 'pen' | 'eraser' | 'rectangle' | 'circle' | 'a
 
 export type ShapeType = 'rectangle' | 'circle' | 'arc' | 'line' | 'arrow';
 
-export type ToolbarPosition = 'top' | 'bottom' | 'left' | 'right' | 'floating';
+export type ToolbarPosition = 'top' | 'bottom' | 'left' | 'right';
 
-export type ToolbarMode = 'fill' | 'compact';
+export type ToolbarMode = 'fill' | 'floating';
 
 export interface Point {
   x: number;

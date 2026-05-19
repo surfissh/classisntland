@@ -57,27 +57,24 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
     const toolbarPosition = useStore.getState().settings.toolbarPosition;
-    const menuHeight = 320;
-    const menuWidth = 220;
 
     let style: typeof position = {};
 
     switch (toolbarPosition) {
       case 'top':
-      case 'floating':
-        style = { top: rect.bottom + 8, left: rect.left };
+        style = { top: rect.height + 8, left: 0 };
         break;
       case 'bottom':
-        style = { bottom: rect.height + 8, left: rect.left };
+        style = { bottom: rect.height + 8, left: 0 };
         break;
       case 'left':
-        style = { top: rect.top, left: rect.right + 8 };
+        style = { top: 0, left: rect.width + 8 };
         break;
       case 'right':
-        style = { top: rect.top, right: rect.width + 8 };
+        style = { top: 0, right: rect.width + 8 };
         break;
       default:
-        style = { bottom: rect.height + 8, left: rect.left };
+        style = { bottom: rect.height + 8, left: 0 };
     }
 
     setPosition(style);
