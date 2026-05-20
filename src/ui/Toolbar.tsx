@@ -62,6 +62,7 @@ const Toolbar = () => {
 
   const activeTool = useStore((s) => s.activeTool);
   const setActiveTool = useStore((s) => s.setActiveTool);
+  const setSelectedElementIds = useStore((s) => s.setSelectedElementIds);
   const settings = useStore((s) => s.settings);
   const setSettings = useStore((s) => s.setSettings);
 
@@ -76,9 +77,12 @@ const Toolbar = () => {
         setSecondaryMenuTool(null);
       }
 
+      if (tool !== activeTool) {
+        setSelectedElementIds([]);
+      }
       setActiveTool(tool);
     },
-    [activeTool, secondaryMenuTool, setActiveTool]
+    [activeTool, secondaryMenuTool, setActiveTool, setSelectedElementIds]
   );
 
   const handleToolDoubleClick = useCallback((tool: ToolType) => {
@@ -123,7 +127,10 @@ const Toolbar = () => {
   if (!showToolbar) {
     return (
       <button
-        onClick={() => setSettings({ showToolbar: true })}
+        onClick={() => {
+          setShowSettings(false);
+          setSettings({ showToolbar: true });
+        }}
         className="fixed bottom-4 right-4 z-50 w-10 h-10 rounded-full bg-neutral-800/90 border border-neutral-600 shadow-xl flex items-center justify-center text-neutral-300 hover:bg-neutral-700 backdrop-blur-md transition-all active:scale-95"
         title="Show toolbar"
       >
@@ -153,6 +160,10 @@ const Toolbar = () => {
         </button>
       </div>
 
+      {toolbarMode === 'floating' && (
+        <div className={isVertical ? 'h-px w-6 bg-neutral-600 my-1' : 'w-px h-6 bg-neutral-600 mx-1'} />
+      )}
+
       <div className={`flex items-center ${isVertical ? 'flex-col' : ''} gap-0.5 mx-1`}>
         {TOOLS.map(({ type, icon, label }) => (
           <div
@@ -178,6 +189,10 @@ const Toolbar = () => {
         ))}
         <UndoButton />
       </div>
+
+      {toolbarMode === 'floating' && (
+        <div className={isVertical ? 'h-px w-6 bg-neutral-600 my-1' : 'w-px h-6 bg-neutral-600 mx-1'} />
+      )}
 
       <div className={`flex items-center ${isVertical ? 'flex-col' : ''} ${toolbarMode === 'fill' ? 'flex-1 justify-end' : ''} gap-0.5`}>
         <PageManager isVertical={isVertical} />

@@ -60,12 +60,17 @@ export const ShapeTool: ToolHandler = {
     let width: number;
     let height: number;
 
-    if (shapeType === 'circle') {
+    if (shapeType === 'circle' || shapeType === 'arc') {
       const size = Math.max(Math.abs(dx), Math.abs(dy));
       width = size;
       height = size;
       x = dx >= 0 ? state.startX : state.startX - size;
       y = dy >= 0 ? state.startY : state.startY - size;
+    } else if (shapeType === 'line' || shapeType === 'arrow') {
+      x = state.startX;
+      y = state.startY;
+      width = dx;
+      height = dy;
     } else {
       x = Math.min(state.startX, state.currentX);
       y = Math.min(state.startY, state.currentY);
@@ -136,12 +141,17 @@ export const ShapeTool: ToolHandler = {
     let width: number;
     let height: number;
 
-    if (shapeType === 'circle') {
+    if (shapeType === 'circle' || shapeType === 'arc') {
       const size = Math.max(Math.abs(dx), Math.abs(dy));
       width = size;
       height = size;
       x = dx >= 0 ? state.startX : state.startX - size;
       y = dy >= 0 ? state.startY : state.startY - size;
+    } else if (shapeType === 'line' || shapeType === 'arrow') {
+      x = state.startX;
+      y = state.startY;
+      width = dx;
+      height = dy;
     } else {
       x = Math.min(state.startX, state.currentX);
       y = Math.min(state.startY, state.currentY);

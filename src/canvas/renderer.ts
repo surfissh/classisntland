@@ -292,9 +292,10 @@ function drawSelectionBox(
   centerX?: number,
   centerY?: number,
 ) {
-  const offX = cssW / 2 - camera.x * camera.zoom;
-  const offY = cssH / 2 - camera.y * camera.zoom;
-  const z = camera.zoom;
+  const dpr = window.devicePixelRatio || 1;
+  const offX = (cssW / 2 - camera.x * camera.zoom) * dpr;
+  const offY = (cssH / 2 - camera.y * camera.zoom) * dpr;
+  const z = camera.zoom * dpr;
 
   const sLeft = bounds.x * z + offX;
   const sTop = bounds.y * z + offY;

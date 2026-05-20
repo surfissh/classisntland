@@ -303,16 +303,22 @@ export default function Canvas() {
     e.preventDefault();
   }, []);
 
+  const handleBlur = useCallback(() => {
+    useStore.getState().setSelectedElementIds([]);
+  }, []);
+
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 bg-neutral-900"
+      tabIndex={0}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onWheel={handleWheel}
       onContextMenu={handleContextMenu}
+      onBlur={handleBlur}
     />
   );
 }

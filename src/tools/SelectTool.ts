@@ -21,6 +21,10 @@ interface ElementOrigin {
   width: number;
   height: number;
   rotation: number;
+  rawX?: number;
+  rawY?: number;
+  isStroke?: boolean;
+  origPoints?: { x: number; y: number; pressure: number }[];
 }
 
 interface DragState {
@@ -83,7 +87,11 @@ function hitTestShape(px: number, py: number, shape: ShapeElement): boolean {
   const { x, y, width, height, shapeType } = shape;
 
   if (shapeType === 'rectangle') {
-    return px >= x && px <= x + width && py >= y && py <= y + height;
+    const minX = Math.min(x, x + width);
+    const maxX = Math.max(x, x + width);
+    const minY = Math.min(y, y + height);
+    const maxY = Math.max(y, y + height);
+    return px >= minX && px <= maxX && py >= minY && py <= maxY;
   }
 
   if (shapeType === 'circle') {
@@ -122,7 +130,7 @@ function hitTestShape(px: number, py: number, shape: ShapeElement): boolean {
     return a <= startA + sweep;
   }
 
-  return px >= x && px <= x + width && py >= y && py <= y + height;
+  return px >= Math.min(x, x + width) && px <= Math.max(x, x + width) && py >= Math.min(y, y + height) && py <= Math.max(y, y + height);
 }
 
 function hitTestElement(worldX: number, worldY: number, element: WhiteboardElement): boolean {
@@ -182,10 +190,10 @@ function getSelectionBounds(
     }
 
     const shape = el as ShapeElement;
-    elMinX = shape.x;
-    elMinY = shape.y;
-    elMaxX = shape.x + shape.width;
-    elMaxY = shape.y + shape.height;
+    elMinX = Math.min(shape.x, shape.x + shape.width);
+    elMinY = Math.min(shape.y, shape.y + shape.height);
+    elMaxX = Math.max(shape.x, shape.x + shape.width);
+    elMaxY = Math.max(shape.y, shape.y + shape.height);
 
     minX = Math.min(minX, elMinX);
     minY = Math.min(minY, elMinY);
@@ -333,7 +341,26 @@ function getElementBounds(el: WhiteboardElement): { x: number; y: number; width:
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }
   const sh = el as ShapeElement;
-  return { x: sh.x, y: sh.y, width: sh.width, height: sh.height };
+  const mx = Math.min(sh.x, sh.x + sh.width);
+  const my = Math.min(sh.y, sh.y + sh.height);
+  return { x: mx, y: my, width: Math.abs(sh.width), height: Math.abs(sh.height) };
+}
+
+function buildElementOrigin(el: WhiteboardElement): ElementOrigin {
+  const b = getElementBounds(el);
+  const isStroke = el.type === 'pen';
+  return {
+    id: el.id,
+    x: b.x,
+    y: b.y,
+    width: b.width,
+    height: b.height,
+    rotation: el.rotation ?? 0,
+    rawX: isStroke ? undefined : (el as ShapeElement).x,
+    rawY: isStroke ? undefined : (el as ShapeElement).y,
+    isStroke,
+    origPoints: isStroke ? (el as StrokeElement).points.map((p) => ({ ...p })) : undefined,
+  };
 }
 
 function isInsideRect(
@@ -391,10 +418,7 @@ export const SelectTool: ToolHandler = {
           state.selectionCenterX = rotatedBounds.cx;
           state.selectionCenterY = rotatedBounds.cy;
           state.startAngle = Math.atan2(worldY - rotatedBounds.cy, worldX - rotatedBounds.cx);
-          state.elementOrigins = selectedElements.map((el) => {
-            const b = getElementBounds(el);
-            return { id: el.id, x: b.x, y: b.y, width: b.width, height: b.height, rotation: el.rotation ?? 0 };
-          });
+          state.elementOrigins = selectedElements.map((el) => buildElementOrigin(el));
           return;
         }
 
@@ -406,12 +430,23 @@ export const SelectTool: ToolHandler = {
           state.lastY = worldY;
           state.handlePos = handleHit;
           state.selectionOrigins = { ...unrotatedBounds! };
-          state.elementOrigins = selectedElements.map((el) => {
-            const b = getElementBounds(el);
-            return { id: el.id, x: b.x, y: b.y, width: b.width, height: b.height, rotation: el.rotation ?? 0 };
-          });
+          state.elementOrigins = selectedElements.map((el) => buildElementOrigin(el));
           return;
         }
+      }
+
+      if (unrotatedBounds && isInsideRect(worldX, worldY,
+        unrotatedBounds.x, unrotatedBounds.y, unrotatedBounds.width, unrotatedBounds.height)) {
+        state.type = 'drag';
+        state.startX = worldX;
+        state.startY = worldY;
+        state.lastX = worldX;
+        state.lastY = worldY;
+        state.elementOrigins = selectedElements.map((el) => {
+          const b = getElementBounds(el);
+          return { id: el.id, x: b.x, y: b.y, width: b.width, height: b.height, rotation: el.rotation ?? 0 };
+        });
+        return;
       }
     }
 
@@ -426,10 +461,7 @@ export const SelectTool: ToolHandler = {
         state.startY = worldY;
         state.lastX = worldX;
         state.lastY = worldY;
-        state.elementOrigins = store.getSelectedElements().map((el) => {
-          const b = getElementBounds(el);
-          return { id: el.id, x: b.x, y: b.y, width: b.width, height: b.height, rotation: el.rotation ?? 0 };
-        });
+        state.elementOrigins = store.getSelectedElements().map((el) => buildElementOrigin(el));
         return;
       }
 
@@ -440,8 +472,7 @@ export const SelectTool: ToolHandler = {
       state.startY = worldY;
       state.lastX = worldX;
       state.lastY = worldY;
-      const b = getElementBounds(hitElement);
-      state.elementOrigins = [{ id: hitElement.id, x: b.x, y: b.y, width: b.width, height: b.height, rotation: hitElement.rotation ?? 0 }];
+      state.elementOrigins = [buildElementOrigin(hitElement)];
       return;
     }
 
@@ -465,10 +496,20 @@ export const SelectTool: ToolHandler = {
       const store = useStore.getState();
 
       for (const origin of state.elementOrigins) {
-        store.updateElement(origin.id, {
-          x: origin.x + dx,
-          y: origin.y + dy,
-        } as Partial<WhiteboardElement>);
+        if (origin.isStroke && origin.origPoints) {
+          store.updateElement(origin.id, {
+            points: origin.origPoints.map((p) => ({
+              ...p,
+              x: p.x + dx,
+              y: p.y + dy,
+            })),
+          } as Partial<WhiteboardElement>);
+        } else {
+          store.updateElement(origin.id, {
+            x: (origin.rawX ?? origin.x) + dx,
+            y: (origin.rawY ?? origin.y) + dy,
+          } as Partial<WhiteboardElement>);
+        }
       }
 
       return;
@@ -497,17 +538,27 @@ export const SelectTool: ToolHandler = {
       const store = useStore.getState();
 
       for (const origin of state.elementOrigins) {
-        const nx = sel.x + (origin.x - sel.x) * scaleX + offsetX;
-        const ny = sel.y + (origin.y - sel.y) * scaleY + offsetY;
-        const nw = origin.width * scaleX;
-        const nh = origin.height * scaleY;
+        if (origin.isStroke && origin.origPoints) {
+          store.updateElement(origin.id, {
+            points: origin.origPoints.map((p) => ({
+              ...p,
+              x: sel.x + (p.x - sel.x) * scaleX + offsetX,
+              y: sel.y + (p.y - sel.y) * scaleY + offsetY,
+            })),
+          } as Partial<WhiteboardElement>);
+        } else {
+          const nx = sel.x + (origin.x - sel.x) * scaleX + offsetX;
+          const ny = sel.y + (origin.y - sel.y) * scaleY + offsetY;
+          const nw = origin.width * scaleX;
+          const nh = origin.height * scaleY;
 
-        store.updateElement(origin.id, {
-          x: nx,
-          y: ny,
-          width: nw,
-          height: nh,
-        } as Partial<WhiteboardElement>);
+          store.updateElement(origin.id, {
+            x: nx,
+            y: ny,
+            width: nw,
+            height: nh,
+          } as Partial<WhiteboardElement>);
+        }
       }
 
       return;
@@ -523,12 +574,51 @@ export const SelectTool: ToolHandler = {
       const deltaAngle = currentAngle - state.startAngle!;
       const deltaDeg = deltaAngle * 180 / Math.PI;
 
+      const cosR = Math.cos(deltaAngle);
+      const sinR = Math.sin(deltaAngle);
+
       const store = useStore.getState();
 
       for (const origin of state.elementOrigins) {
-        store.updateElement(origin.id, {
-          rotation: origin.rotation + deltaDeg,
-        } as Partial<WhiteboardElement>);
+        if (origin.isStroke && origin.origPoints && origin.origPoints.length > 0) {
+          let sumX = 0, sumY = 0;
+          for (const p of origin.origPoints) {
+            sumX += p.x;
+            sumY += p.y;
+          }
+          const strokeCx = sumX / origin.origPoints.length;
+          const strokeCy = sumY / origin.origPoints.length;
+          const sdx = strokeCx - cx;
+          const sdy = strokeCy - cy;
+          const newStrokeCx = cx + sdx * cosR - sdy * sinR;
+          const newStrokeCy = cy + sdx * sinR + sdy * cosR;
+          const tx = newStrokeCx - strokeCx;
+          const ty = newStrokeCy - strokeCy;
+          store.updateElement(origin.id, {
+            points: origin.origPoints.map((p) => ({
+              ...p,
+              x: p.x + tx,
+              y: p.y + ty,
+            })),
+            rotation: origin.rotation + deltaDeg,
+          } as Partial<WhiteboardElement>);
+        } else {
+          const elemCx = origin.x + origin.width / 2;
+          const elemCy = origin.y + origin.height / 2;
+          const edx = elemCx - cx;
+          const edy = elemCy - cy;
+          const newElemCx = cx + edx * cosR - edy * sinR;
+          const newElemCy = cy + edx * sinR + edy * cosR;
+          const centerDx = newElemCx - elemCx;
+          const centerDy = newElemCy - elemCy;
+          const baseX = origin.rawX ?? origin.x;
+          const baseY = origin.rawY ?? origin.y;
+          store.updateElement(origin.id, {
+            x: baseX + centerDx,
+            y: baseY + centerDy,
+            rotation: origin.rotation + deltaDeg,
+          } as Partial<WhiteboardElement>);
+        }
       }
 
       return;
@@ -551,20 +641,6 @@ export const SelectTool: ToolHandler = {
       if (w > 3 || h > 3) {
         const found = elementsInRect(x, y, w, h);
         useStore.getState().setSelectedElementIds(found.map((e) => e.id));
-      }
-    }
-
-    if (state.type === 'drag') {
-      const dx = worldX - state.startX;
-      const dy = worldY - state.startY;
-
-      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
-        for (const origin of state.elementOrigins) {
-          useStore.getState().updateElement(origin.id, {
-            x: origin.x,
-            y: origin.y,
-          } as Partial<WhiteboardElement>);
-        }
       }
     }
 

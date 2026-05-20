@@ -16,7 +16,7 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
 
   const currentIndex = pages.findIndex((p) => p.id === currentPageId);
   const totalPages = pages.length;
-  const pageLabel = `Page ${currentIndex + 1}/${totalPages}`;
+  const pageLabel = `${currentIndex + 1}/${totalPages}`;
   const isLastPage = currentIndex === totalPages - 1;
 
   const goToPrev = () => {
@@ -33,14 +33,12 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
     setCurrentPage(pages[newIndex].id);
   };
 
-  const canDelete = totalPages > 1;
-
   return (
     <div className={`flex ${isVertical ? 'flex-col' : 'flex-row items-center'} gap-0.5`}>
       <button
         onClick={goToPrev}
         disabled={currentIndex === 0}
-        className="p-1.5 rounded-lg text-neutral-300 hover:bg-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+        className="p-1.5 flex justify-center rounded-lg text-neutral-300 hover:bg-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
         title="Previous page"
       >
         {isVertical ? (
@@ -64,7 +62,7 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
 
       <button
         onClick={goToNext}
-        className="p-1.5 rounded-lg text-neutral-300 hover:bg-neutral-700 transition-all active:scale-95"
+        className="p-1.5 flex justify-center rounded-lg text-neutral-300 hover:bg-neutral-700 transition-all active:scale-95"
         title={isLastPage ? 'Add page' : 'Next page'}
       >
         {isLastPage ? (
@@ -82,19 +80,6 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
           </svg>
         )}
       </button>
-
-      {canDelete && (
-        <button
-          onClick={() => deletePage(currentPageId)}
-          className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-neutral-700 transition-all active:scale-95"
-          title="Delete current page"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-          </svg>
-        </button>
-      )}
 
       {showPreview && <PagePreview onClose={() => setShowPreview(false)} />}
     </div>

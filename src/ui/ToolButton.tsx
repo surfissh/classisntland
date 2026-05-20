@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 
 interface ToolButtonProps {
   icon: ReactNode;
@@ -11,31 +11,19 @@ interface ToolButtonProps {
 const ToolButton = ({ icon, label, isActive, onClick, onDoubleClick }: ToolButtonProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const clickCountRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const lastClickTimeRef = useRef(0);
 
   const handleClick = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = undefined;
-    }
-    clickCountRef.current += 1;
-    if (clickCountRef.current === 1) {
-      timerRef.current = setTimeout(() => {
-        onClick();
-        clickCountRef.current = 0;
-      }, 250);
-    } else {
-      clickCountRef.current = 0;
-      onDoubleClick?.();
+    const now = Date.now();
+    const isDouble = now - lastClickTimeRef.current < 300;
+    lastClickTimeRef.current = now;
+
+    onClick();
+
+    if (isDouble && onDoubleClick) {
+      onDoubleClick();
     }
   };
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
 
   return (
     <div className="relative inline-flex">
