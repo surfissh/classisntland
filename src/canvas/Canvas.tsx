@@ -311,6 +311,7 @@ export default function Canvas() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 bg-neutral-900"
+      style={{ touchAction: 'none' }}
       tabIndex={0}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

@@ -13,8 +13,14 @@ html, body, #root {
   height: 100%;
   overflow: hidden;
   font-family: system-ui, -apple-system, sans-serif;
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 canvas {
   display: block;
+  touch-action: none;
 }

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import useStore from '@/store/useStore';
 import type { ToolbarPosition, ToolbarMode } from '@/types';
@@ -11,6 +11,16 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const settings = useStore((s) => s.settings);
   const setSettings = useStore((s) => s.setSettings);
+  const reconnectToServer = useStore((s) => s.reconnectToServer);
+
+  const [serverUrlInput, setServerUrlInput] = useState(settings.serverUrl);
+  const [isFullscreen, setIsFullscreen] = useState(() => !!document.fullscreenElement);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -32,11 +42,24 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
   const positions: ToolbarPosition[] = ['top', 'bottom', 'left', 'right'];
   const modes: ToolbarMode[] = ['fill', 'floating'];
 
+  const handleReconnect = () => {
+    setSettings({ serverUrl: serverUrlInput });
+    reconnectToServer(serverUrlInput);
+  };
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen();
+    }
+  };
+
   return createPortal(
     <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center">
       <div
         ref={panelRef}
-        className="bg-neutral-800 border border-neutral-600 rounded-2xl p-6 shadow-2xl w-80 flex flex-col gap-5"
+        className="bg-neutral-800 border border-neutral-600 rounded-2xl p-6 shadow-2xl w-96 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-white font-semibold text-lg">Settings</h2>
@@ -107,6 +130,35 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
               `}
             />
           </button>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs text-neutral-400 uppercase tracking-wide font-medium">Fullscreen</span>
+          <button
+            onClick={toggleFullscreen}
+            className="w-full py-2 rounded-lg text-sm bg-neutral-700 text-neutral-300 hover:bg-neutral-600 transition-colors"
+          >
+            {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs text-neutral-400 uppercase tracking-wide font-medium">Server Connection</span>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={serverUrlInput}
+              onChange={(e) => setServerUrlInput(e.target.value)}
+              placeholder="ws://host:port/room"
+              className="flex-1 bg-neutral-900 border border-neutral-600 rounded-lg px-3 py-1.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500"
+            />
+            <button
+              onClick={handleReconnect}
+              className="px-3 py-1.5 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-500 transition-colors whitespace-nowrap"
+            >
+              Connect
+            </button>
+          </div>
         </div>
       </div>
     </div>,

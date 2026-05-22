@@ -82,6 +82,7 @@ export interface Settings {
   toolbarPosition: ToolbarPosition;
   toolbarMode: ToolbarMode;
   showToolbar: boolean;
+  serverUrl: string;
 }
 
 export interface AppState {

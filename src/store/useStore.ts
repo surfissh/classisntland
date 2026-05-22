@@ -17,11 +17,36 @@ import type {
   Settings,
 } from '@/types';
 
-const WS_URL = 'ws://localhost:1234';
-const ROOM = 'whiteboard';
+function parseServerUrl(url: string): { serverUrl: string; room: string } {
+  try {
+    const u = new URL(url);
+    const pathParts = u.pathname.split('/').filter(Boolean);
+    const room = pathParts.pop() || 'whiteboard';
+    return { serverUrl: `${u.protocol}//${u.host}`, room };
+  } catch {
+    return { serverUrl: 'ws://localhost:1234', room: 'whiteboard' };
+  }
+}
+
+const DEFAULT_SERVER_URL = 'ws://localhost:1234/whiteboard';
+
+function getSavedServerUrl(): string {
+  try {
+    const saved = localStorage.getItem('whiteboard-settings');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.serverUrl && typeof parsed.serverUrl === 'string') {
+        return parsed.serverUrl;
+      }
+    }
+  } catch {}
+  return DEFAULT_SERVER_URL;
+}
+
+const { serverUrl: initialServerUrl, room: initialRoom } = parseServerUrl(getSavedServerUrl());
 
 const doc = new Y.Doc();
-const wsProvider = new WebsocketProvider(WS_URL, ROOM, doc, {
+let wsProvider = new WebsocketProvider(initialServerUrl, initialRoom, doc, {
   connect: true,
   maxBackoffTime: 10000,
 });
@@ -81,6 +106,7 @@ interface StoreState extends AppState {
   undo: () => void;
   redo: () => void;
   getSelectedElements: () => WhiteboardElement[];
+  reconnectToServer: (serverUrl: string) => void;
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -109,6 +135,7 @@ export const useStore = create<StoreState>((set, get) => ({
     toolbarPosition: 'bottom' as ToolbarPosition,
     toolbarMode: 'fill' as ToolbarMode,
     showToolbar: true,
+    serverUrl: DEFAULT_SERVER_URL,
   },
 
   syncElementsForPage: (pageId: string) => {
@@ -259,6 +286,14 @@ export const useStore = create<StoreState>((set, get) => ({
 
   undo: () => undoManager.undo(),
   redo: () => undoManager.redo(),
+  reconnectToServer: (serverUrl: string) => {
+    const { serverUrl: url, room: newRoom } = parseServerUrl(serverUrl);
+    wsProvider.destroy();
+    wsProvider = new WebsocketProvider(url, newRoom, doc, {
+      connect: true,
+      maxBackoffTime: 10000,
+    });
+  },
 
   getSelectedElements: () => {
     const { elements, currentPageId, selectedElementIds } = get();
