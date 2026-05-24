@@ -5,6 +5,8 @@ import { nanoid } from 'nanoid';
 import type {
   AppState,
   WhiteboardElement,
+  StrokeElement,
+  ShapeElement,
   Page,
   Camera,
   ToolType,
@@ -15,6 +17,7 @@ import type {
   EraserSettings,
   ShapeSettings,
   Settings,
+  Point,
 } from '@/types';
 
 function parseServerUrl(url: string): { serverUrl: string; room: string } {
@@ -59,20 +62,131 @@ const undoManager = new Y.UndoManager(elementsArray, {
 
 export { doc, wsProvider, undoManager };
 
+// ── Y.Map ↔ plain object conversion ─────────────────────────────────────────
+
+function yMapToPoint(pm: Y.Map<any>): Point {
+  return {
+    x: pm.get('x') as number,
+    y: pm.get('y') as number,
+    pressure: pm.get('pressure') as number,
+  };
+}
+
+function pointToYMap(p: Point): Y.Map<any> {
+  const m = new Y.Map();
+  m.set('x', p.x);
+  m.set('y', p.y);
+  m.set('pressure', p.pressure);
+  return m;
+}
+
+function yMapToElement(em: Y.Map<any>): WhiteboardElement {
+  const type = em.get('type') as string;
+  const style = em.get('style') as Y.Map<any>;
+  const base: any = {
+    id: em.get('id') as string,
+    type,
+    style: {
+      color: style.get('color') as string,
+      opacity: style.get('opacity') as number,
+    },
+    pageId: em.get('pageId') as string,
+    createdAt: em.get('createdAt') as number,
+    userId: em.get('userId') as string,
+  };
+
+  if (type === 'pen') {
+    const pointsArr = em.get('points') as Y.Array<Y.Map<any>>;
+    return {
+      ...base,
+      type: 'pen',
+      points: pointsArr.toArray().map(yMapToPoint),
+      baseWidth: em.get('baseWidth') as number,
+    } as StrokeElement;
+  }
+
+  return {
+    ...base,
+    type: type as ToolType,
+    shapeType: em.get('shapeType') as ShapeType,
+    x: em.get('x') as number,
+    y: em.get('y') as number,
+    width: em.get('width') as number,
+    height: em.get('height') as number,
+    startAngle: em.get('startAngle') as number | undefined,
+    endAngle: em.get('endAngle') as number | undefined,
+    strokeWidth: em.get('strokeWidth') as number,
+    fillColor: em.get('fillColor') as string | null,
+    showArrow: em.get('showArrow') as boolean | undefined,
+  } as ShapeElement;
+}
+
+function elementToYMap(el: WhiteboardElement): Y.Map<any> {
+  const m = new Y.Map();
+  m.set('id', el.id);
+  m.set('type', el.type);
+  m.set('pageId', el.pageId);
+  m.set('createdAt', el.createdAt);
+  m.set('userId', el.userId);
+
+  const style = new Y.Map();
+  style.set('color', el.style.color);
+  style.set('opacity', el.style.opacity);
+  m.set('style', style);
+
+  if (el.type === 'pen') {
+    const stroke = el as StrokeElement;
+    m.set('baseWidth', stroke.baseWidth);
+    const pointsArr = new Y.Array();
+    for (const p of stroke.points) {
+      pointsArr.push([pointToYMap(p)]);
+    }
+    m.set('points', pointsArr);
+  } else {
+    const shape = el as ShapeElement;
+    m.set('shapeType', shape.shapeType);
+    m.set('x', shape.x);
+    m.set('y', shape.y);
+    m.set('width', shape.width);
+    m.set('height', shape.height);
+    m.set('strokeWidth', shape.strokeWidth);
+    m.set('fillColor', shape.fillColor);
+    if (shape.startAngle !== undefined) m.set('startAngle', shape.startAngle);
+    if (shape.endAngle !== undefined) m.set('endAngle', shape.endAngle);
+    if (shape.showArrow !== undefined) m.set('showArrow', shape.showArrow);
+  }
+
+  return m;
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
 function getAllElements(): WhiteboardElement[] {
-  return elementsArray.toArray() as unknown as WhiteboardElement[];
+  const out: WhiteboardElement[] = [];
+  for (let i = 0; i < elementsArray.length; i++) {
+    const em = elementsArray.get(i);
+    if (em && typeof em === 'object' && 'get' in em) {
+      out.push(yMapToElement(em as Y.Map<any>));
+    }
+  }
+  return out;
 }
 
 function getPageElements(pageId: string): WhiteboardElement[] {
-  return getAllElements().filter((e: any) => e && e.pageId === pageId);
+  return getAllElements().filter((e) => e.pageId === pageId);
 }
 
 function getElementIndex(id: string): number {
   for (let i = 0; i < elementsArray.length; i++) {
-    if ((elementsArray.get(i) as any)?.id === id) return i;
+    const em = elementsArray.get(i);
+    if (em && typeof em === 'object' && 'get' in em) {
+      if ((em as Y.Map<any>).get('id') === id) return i;
+    }
   }
   return -1;
 }
+
+// ── Store interface ──────────────────────────────────────────────────────────
 
 interface StoreState extends AppState {
   init: () => void;
@@ -83,6 +197,10 @@ interface StoreState extends AppState {
   setCamera: (camera: Partial<Camera>) => void;
 
   addElement: (element: WhiteboardElement) => void;
+  addPointToStroke: (strokeId: string, point: Point) => void;
+  appendPointsToStroke: (strokeId: string, points: Point[]) => void;
+  deletePointRange: (strokeId: string, start: number, count: number) => void;
+  replaceStrokePoints: (strokeId: string, points: Point[]) => void;
   updateElement: (id: string, changes: Partial<WhiteboardElement>) => void;
   deleteElement: (id: string) => void;
   deleteElements: (ids: string[]) => void;
@@ -172,7 +290,7 @@ export const useStore = create<StoreState>((set, get) => ({
     pagesMap.observe(syncPages);
     syncPages();
 
-    elementsArray.observe(() => {
+    elementsArray.observeDeep(() => {
       get().syncElementsForPage(get().currentPageId);
     });
 
@@ -196,16 +314,82 @@ export const useStore = create<StoreState>((set, get) => ({
     set((s) => ({ camera: { ...s.camera, ...partial } })),
 
   addElement: (element) => {
-    elementsArray.push([element as unknown as any]);
+    elementsArray.push([elementToYMap(element) as any]);
+  },
+
+  addPointToStroke: (strokeId, point) => {
+    const idx = getElementIndex(strokeId);
+    if (idx === -1) return;
+    const em = elementsArray.get(idx);
+    if (!em || typeof em !== 'object' || !('get' in em)) return;
+    const pointsArr = (em as Y.Map<any>).get('points') as Y.Array<Y.Map<any>>;
+    if (!pointsArr) return;
+    pointsArr.push([pointToYMap(point)]);
+  },
+
+  appendPointsToStroke: (strokeId, points) => {
+    const idx = getElementIndex(strokeId);
+    if (idx === -1) return;
+    const em = elementsArray.get(idx);
+    if (!em || typeof em !== 'object' || !('get' in em)) return;
+    const pointsArr = (em as Y.Map<any>).get('points') as Y.Array<Y.Map<any>>;
+    if (!pointsArr) return;
+    doc.transact(() => {
+      for (const p of points) {
+        pointsArr.push([pointToYMap(p)]);
+      }
+    });
+  },
+
+  deletePointRange: (strokeId, start, count) => {
+    const idx = getElementIndex(strokeId);
+    if (idx === -1) return;
+    const em = elementsArray.get(idx);
+    if (!em || typeof em !== 'object' || !('get' in em)) return;
+    const pointsArr = (em as Y.Map<any>).get('points') as Y.Array<Y.Map<any>>;
+    if (!pointsArr) return;
+    pointsArr.delete(start, count);
+  },
+
+  replaceStrokePoints: (strokeId, points) => {
+    const idx = getElementIndex(strokeId);
+    if (idx === -1) return;
+    const em = elementsArray.get(idx);
+    if (!em || typeof em !== 'object' || !('get' in em)) return;
+    const pointsArr = (em as Y.Map<any>).get('points') as Y.Array<Y.Map<any>>;
+    if (!pointsArr) return;
+    doc.transact(() => {
+      pointsArr.delete(0, pointsArr.length);
+      for (const p of points) {
+        pointsArr.push([pointToYMap(p)]);
+      }
+    });
   },
 
   updateElement: (id, changes) => {
     const idx = getElementIndex(id);
     if (idx === -1) return;
-    const current = elementsArray.get(idx) as unknown as Record<string, any>;
-    const merged = { ...current, ...changes };
-    elementsArray.delete(idx, 1);
-    elementsArray.insert(idx, [merged as any]);
+    const em = elementsArray.get(idx);
+    if (!em || typeof em !== 'object' || !('get' in em)) return;
+    const m = em as Y.Map<any>;
+
+    if ('style' in changes) {
+      const newStyle = changes.style;
+      if (newStyle) {
+        const styleMap = m.get('style') as Y.Map<any>;
+        if (styleMap) {
+          if (newStyle.color !== undefined) styleMap.set('color', newStyle.color);
+          if (newStyle.opacity !== undefined) styleMap.set('opacity', newStyle.opacity);
+        }
+      }
+      delete changes.style;
+    }
+
+    for (const [key, value] of Object.entries(changes)) {
+      if (value !== undefined) {
+        m.set(key, value);
+      }
+    }
   },
 
   deleteElement: (id) => {
@@ -215,18 +399,26 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   deleteElements: (ids) => {
-    ids.forEach((id) => {
+    const sorted: number[] = [];
+    for (const id of ids) {
       const idx = getElementIndex(id);
-      if (idx !== -1) elementsArray.delete(idx, 1);
-    });
+      if (idx !== -1) sorted.push(idx);
+    }
+    sorted.sort((a, b) => b - a);
+    for (const idx of sorted) {
+      elementsArray.delete(idx, 1);
+    }
   },
 
   clearPage: () => {
     const pageId = get().currentPageId;
     const indicesToDelete: number[] = [];
     for (let i = elementsArray.length - 1; i >= 0; i--) {
-      if ((elementsArray.get(i) as any)?.pageId === pageId) {
-        indicesToDelete.push(i);
+      const em = elementsArray.get(i);
+      if (em && typeof em === 'object' && 'get' in em) {
+        if ((em as Y.Map<any>).get('pageId') === pageId) {
+          indicesToDelete.push(i);
+        }
       }
     }
     for (const idx of indicesToDelete) {
@@ -257,8 +449,11 @@ export const useStore = create<StoreState>((set, get) => ({
     pagesMap.delete(pageId);
     const toDelete: number[] = [];
     for (let i = elementsArray.length - 1; i >= 0; i--) {
-      if ((elementsArray.get(i) as any)?.pageId === pageId) {
-        toDelete.push(i);
+      const em = elementsArray.get(i);
+      if (em && typeof em === 'object' && 'get' in em) {
+        if ((em as Y.Map<any>).get('pageId') === pageId) {
+          toDelete.push(i);
+        }
       }
     }
     for (const idx of toDelete) {
@@ -302,7 +497,6 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 }));
 
-// load saved settings from localStorage
 try {
   const saved = localStorage.getItem('whiteboard-settings');
   if (saved) {

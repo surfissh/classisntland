@@ -23,6 +23,27 @@ const state: PenState = {
   lastPoint: null,
 };
 
+let pendingPoints: Point[] = [];
+let penRafId: number | null = null;
+
+function flushPoints() {
+  if (penRafId !== null) {
+    cancelAnimationFrame(penRafId);
+    penRafId = null;
+  }
+  if (pendingPoints.length === 0 || state.currentId === null) return;
+  useStore.getState().appendPointsToStroke(state.currentId, pendingPoints);
+  pendingPoints = [];
+}
+
+function scheduleFlush() {
+  if (penRafId !== null) return;
+  penRafId = requestAnimationFrame(() => {
+    penRafId = null;
+    flushPoints();
+  });
+}
+
 function createStrokeElement(
   id: string,
   points: Point[],
@@ -51,6 +72,7 @@ function getPenSettings() {
 
 export const PenTool: ToolHandler = {
   onPointerDown(_e, worldX, worldY, _camera) {
+    flushPoints();
     const settings = getPenSettings();
     const now = performance.now();
     const id = nanoid();
@@ -58,6 +80,16 @@ export const PenTool: ToolHandler = {
     state.currentId = id;
     state.points = [{ x: worldX, y: worldY, pressure: 0.5 }];
     state.lastPoint = { x: worldX, y: worldY, time: now };
+
+    const store = useStore.getState();
+    const element = createStrokeElement(
+      id,
+      [{ x: worldX, y: worldY, pressure: 0.5 }],
+      settings,
+      store.currentPageId,
+      '',
+    );
+    store.addElement(element);
   },
 
   onPointerMove(_e, worldX, worldY, _camera) {
@@ -67,8 +99,12 @@ export const PenTool: ToolHandler = {
     const pressure = computePressure(state.lastPoint, { x: worldX, y: worldY, time: now });
     const clamped = Math.max(0, Math.min(1, pressure));
 
-    state.points.push({ x: worldX, y: worldY, pressure: clamped });
+    const point = { x: worldX, y: worldY, pressure: clamped };
+    state.points.push(point);
     state.lastPoint = { x: worldX, y: worldY, time: now };
+
+    pendingPoints.push(point);
+    scheduleFlush();
   },
 
   getPreview(): ToolPreview | null {
@@ -76,7 +112,7 @@ export const PenTool: ToolHandler = {
     const settings = getPenSettings();
     return {
       type: 'pen',
-      points: state.points,
+      points: [...state.points, ...pendingPoints],
       color: settings.color,
       baseWidth: settings.baseWidth,
       opacity: 0.8,
@@ -84,25 +120,7 @@ export const PenTool: ToolHandler = {
   },
 
   onPointerUp(_e, _worldX, _worldY, _camera) {
-    if (state.currentId === null || state.points.length === 0) {
-      state.currentId = null;
-      state.points = [];
-      state.lastPoint = null;
-      return;
-    }
-
-    const store = useStore.getState();
-    const settings = getPenSettings();
-    const element = createStrokeElement(
-      state.currentId,
-      [...state.points],
-      settings,
-      store.currentPageId,
-      '', // userId — populated by awareness or left empty
-    );
-
-    store.addElement(element);
-
+    flushPoints();
     state.currentId = null;
     state.points = [];
     state.lastPoint = null;

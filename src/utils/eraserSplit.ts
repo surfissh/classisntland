@@ -176,6 +176,12 @@ export function eraserSplit(
     return strokePoints[0].inside ? [] : null;
   }
 
+  const anyInside = strokePoints.some(sp => sp.inside);
+  const anyIntersection = strokePoints.some(sp => !sp.isOriginal);
+  if (!anyInside && !anyIntersection) {
+    return null;
+  }
+
   const fragments: StrokeElement[] = [];
   let currentFragment: Point[] = [];
 
