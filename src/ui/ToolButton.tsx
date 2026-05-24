@@ -1,4 +1,5 @@
-import { useState, useRef, type ReactNode } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ToolButtonProps {
   icon: ReactNode;
@@ -10,6 +11,7 @@ interface ToolButtonProps {
 
 const ToolButton = ({ icon, label, isActive, onClick, onDoubleClick }: ToolButtonProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const buttonRef = useRef<HTMLButtonElement>(null);
   const lastClickTimeRef = useRef(0);
 
@@ -24,6 +26,17 @@ const ToolButton = ({ icon, label, isActive, onClick, onDoubleClick }: ToolButto
       onDoubleClick();
     }
   };
+
+  useEffect(() => {
+    if (!showTooltip || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setTooltipStyle({
+      position: 'fixed',
+      top: rect.top - 8,
+      left: rect.left + rect.width / 2,
+      transform: 'translate(-50%, -100%)',
+    });
+  }, [showTooltip]);
 
   return (
     <div className="relative inline-flex">
@@ -46,11 +59,16 @@ const ToolButton = ({ icon, label, isActive, onClick, onDoubleClick }: ToolButto
       >
         {icon}
       </button>
-      {showTooltip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-xs rounded-md bg-neutral-800 text-white border border-neutral-600 shadow-lg whitespace-nowrap z-50 pointer-events-none">
-          {label}
-        </div>
-      )}
+      {showTooltip &&
+        createPortal(
+          <div
+            style={tooltipStyle}
+            className="px-2 py-1 text-xs rounded-md bg-neutral-800 text-white border border-neutral-600 shadow-lg whitespace-nowrap z-50 pointer-events-none"
+          >
+            {label}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

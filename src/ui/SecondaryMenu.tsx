@@ -13,7 +13,7 @@ interface SecondaryMenuProps {
 
 const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ top?: number; bottom?: number; left?: number; right?: number }>({});
+  const [position, setPosition] = useState<React.CSSProperties>({});
 
   const penSettings = useStore((s) => s.penSettings);
   const eraserSettings = useStore((s) => s.eraserSettings);
@@ -55,29 +55,39 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
 
   useEffect(() => {
     if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const toolbarPosition = useStore.getState().settings.toolbarPosition;
+    const updatePosition = () => {
+      const rect = buttonRef.current!.getBoundingClientRect();
+      const toolbarPosition = useStore.getState().settings.toolbarPosition;
 
-    let style: typeof position = {};
+      let style: React.CSSProperties = {};
 
-    switch (toolbarPosition) {
-      case 'top':
-        style = { top: rect.height + 8, left: 0 };
-        break;
-      case 'bottom':
-        style = { bottom: rect.height + 8, left: 0 };
-        break;
-      case 'left':
-        style = { top: 0, left: rect.width + 8 };
-        break;
+      switch (toolbarPosition) {
+        case 'top':
+          style = { position: 'fixed', top: rect.bottom + 8, left: rect.left };
+          break;
+        case 'bottom':
+          style = { position: 'fixed', bottom: window.innerHeight - rect.top + 8, left: rect.left };
+          break;
+        case 'left':
+          style = { position: 'fixed', top: rect.top, left: rect.right + 8 };
+          break;
       case 'right':
-        style = { top: 0, right: rect.width + 8 };
+        style = { position: 'fixed', top: rect.top, right: window.innerWidth - rect.left + 8 };
         break;
-      default:
-        style = { bottom: rect.height + 8, left: 0 };
-    }
+        default:
+          style = { position: 'fixed', bottom: window.innerHeight - rect.top + 8, left: rect.left };
+      }
 
-    setPosition(style);
+      setPosition(style);
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
   }, [buttonRef]);
 
   const selectedElement = (() => {
@@ -96,8 +106,8 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 bg-neutral-800 border border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-3 min-w-[200px]"
-      style={position as React.CSSProperties}
+      className="fixed z-50 bg-neutral-800 border border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-3 min-w-[200px]"
+      style={position}
     >
       {tool === 'pen' && (
         <>

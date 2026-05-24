@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import useStore from '@/store/useStore';
 import type { ToolType } from '@/types';
 import ToolButton from './ToolButton';
@@ -116,17 +117,17 @@ const Toolbar = () => {
   };
 
   const fillEdgeClasses: Record<string, string> = {
-    top: 'left-0 right-0 w-full rounded-none',
-    bottom: 'left-0 right-0 w-full rounded-none',
-    left: 'top-0 bottom-0 h-full rounded-none',
-    right: 'top-0 bottom-0 h-full rounded-none',
+    top: 'left-0 right-0 w-full overflow-x-auto rounded-none',
+    bottom: 'left-0 right-0 w-full overflow-x-auto rounded-none',
+    left: 'top-0 bottom-0 h-full overflow-y-auto rounded-none',
+    right: 'top-0 bottom-0 h-full overflow-y-auto rounded-none',
   };
 
   const floatingEdgeClasses: Record<string, string> = {
-    top: 'left-1/2 -translate-x-1/2 w-auto rounded-xl mt-2',
-    bottom: 'left-1/2 -translate-x-1/2 w-auto rounded-xl mb-2',
-    left: 'top-1/2 -translate-y-1/2 h-auto rounded-xl ml-2',
-    right: 'top-1/2 -translate-y-1/2 h-auto rounded-xl mr-2',
+    top: 'left-1/2 -translate-x-1/2 max-w-[calc(100vw-1rem)] overflow-x-auto rounded-xl mt-2',
+    bottom: 'left-1/2 -translate-x-1/2 max-w-[calc(100vw-1rem)] overflow-x-auto rounded-xl mb-2',
+    left: 'top-1/2 -translate-y-1/2 max-h-[calc(100vh-1rem)] overflow-y-auto rounded-xl ml-2',
+    right: 'top-1/2 -translate-y-1/2 max-h-[calc(100vh-1rem)] overflow-y-auto rounded-xl mr-2',
   };
 
   const containerClass = `
@@ -214,13 +215,15 @@ const Toolbar = () => {
               onClick={() => handleToolClick(type)}
               onDoubleClick={() => handleToolDoubleClick(type)}
             />
-            {secondaryMenuTool === type && (
-              <SecondaryMenu
-                tool={type}
-                onClose={() => setSecondaryMenuTool(null)}
-                buttonRef={secondaryMenuTargetRef}
-              />
-            )}
+            {secondaryMenuTool === type &&
+              createPortal(
+                <SecondaryMenu
+                  tool={type}
+                  onClose={() => setSecondaryMenuTool(null)}
+                  buttonRef={secondaryMenuTargetRef}
+                />,
+                document.body,
+              )}
           </div>
         ))}
         <UndoButton />
@@ -245,11 +248,11 @@ const Toolbar = () => {
         `}
       >
         {isVertical ? (
-          <div className={`flex flex-col items-center ${toolbarMode === 'fill' ? 'justify-center h-full w-full' : ''}`}>
+          <div className={`flex flex-col items-center ${toolbarMode === 'fill' ? 'h-full w-full' : ''}`}>
             {toolbarContent}
           </div>
         ) : (
-          <div className={`flex items-center gap-1 ${toolbarMode === 'fill' ? 'w-full' : 'justify-center'}`}>
+          <div className={`flex items-center gap-1 flex-nowrap ${toolbarMode === 'fill' ? 'w-full' : 'justify-center'}`}>
             {toolbarContent}
           </div>
         )}
