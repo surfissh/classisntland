@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { useStore } from '@/store/useStore';
+import { useStore, updateAwareness } from '@/store/useStore';
 import { renderAll } from './renderer';
 import type { Point, Camera, ToolType } from '@/types';
 import type { ToolHandler, ToolPreview } from '@/tools/types';
@@ -59,11 +59,14 @@ export default function Canvas() {
   const camera = useStore((s) => s.camera);
   const selectedIds = useStore((s) => s.selectedElementIds);
   const activeTool = useStore((s) => s.activeTool);
+  const theme = useStore((s) => s.settings.theme ?? 'system');
+  const remoteUsers = useStore((s) => s.remoteUsers);
 
   const elementsRef = useRef(elements);
   const cameraRef = useRef(camera);
   const selectedIdsRef = useRef(selectedIds);
   const activeToolRef = useRef(activeTool);
+  const remoteUsersRef = useRef(remoteUsers);
 
   useEffect(() => {
     elementsRef.current = elements;
@@ -78,8 +81,8 @@ export default function Canvas() {
   }, [selectedIds]);
 
   useEffect(() => {
-    activeToolRef.current = activeTool;
-  }, [activeTool]);
+    remoteUsersRef.current = remoteUsers;
+  }, [remoteUsers]);
 
   const activePointers = useRef<Map<number, PointerEvent>>(new Map());
   const gestureRef = useRef<PinchGesture | null>(null);
@@ -117,7 +120,14 @@ export default function Canvas() {
 
   useEffect(() => {
     dirtyRef.current = true;
-  }, [elements, camera, selectedIds, activeTool]);
+  }, [elements, camera, selectedIds, activeTool, theme, remoteUsers]);
+
+  useEffect(() => {
+    const { cssW, cssH } = dimsRef.current;
+    if (cssW > 0 && cssH > 0) {
+      updateAwareness(camera, cssW, cssH, currentPageId);
+    }
+  }, [camera, currentPageId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -144,6 +154,7 @@ export default function Canvas() {
           preview,
           cssW,
           cssH,
+          remoteUsersRef.current,
         );
 
         dirtyRef.current = false;
@@ -314,7 +325,7 @@ export default function Canvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 bg-neutral-900 outline-none"
+      className="fixed inset-0 bg-white dark:bg-neutral-900 outline-none"
       style={{ touchAction: 'none' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

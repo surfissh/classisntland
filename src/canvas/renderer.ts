@@ -5,20 +5,23 @@ import type {
   Camera,
   Point,
   ToolType,
+  RemoteUser,
 } from '@/types';
 import type { ToolPreview } from '@/tools/types';
 
 const GRID_SPACING = 20;
 const GRID_DOT_RADIUS = 1.2;
-const GRID_COLOR = 'rgba(128,128,128,0.2)';
 const HANDLE_SIZE = 7;
 const HANDLE_COLOR = '#4a9eff';
-const HANDLE_BORDER = '#ffffff';
 const SELECTION_DASH = [6, 3];
 const ARROW_HEAD_LENGTH = 14;
 const ARROW_HEAD_ANGLE = Math.PI / 6;
 const ROTATION_HANDLE_OFFSET = 22;
 const ROTATION_HANDLE_RADIUS = 8;
+
+function getHandleBorder(): string {
+  return getComputedStyle(document.documentElement).getPropertyValue('--handle-border').trim() || '#ffffff';
+}
 
 export type { ToolPreview };
 
@@ -197,7 +200,8 @@ function drawBackgroundGrid(
   cssW: number,
   cssH: number,
 ) {
-  ctx.fillStyle = GRID_COLOR;
+  const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim() || 'rgba(128,128,128,0.2)';
+  ctx.fillStyle = gridColor;
 
   const invZoom = 1 / camera.zoom;
   const worldLeft = (0 - cssW / 2) * invZoom + camera.x;
@@ -323,7 +327,7 @@ function drawSelectionBox(
   ];
 
   for (const h of handles) {
-    ctx.fillStyle = HANDLE_BORDER;
+    ctx.fillStyle = getHandleBorder();
     ctx.fillRect(h.x - HANDLE_SIZE / 2 - 1, h.y - HANDLE_SIZE / 2 - 1, HANDLE_SIZE + 2, HANDLE_SIZE + 2);
     ctx.fillStyle = HANDLE_COLOR;
     ctx.fillRect(h.x - HANDLE_SIZE / 2, h.y - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
@@ -341,7 +345,7 @@ function drawSelectionBox(
 
   ctx.beginPath();
   ctx.arc(rotHandleX, rotHandleY, ROTATION_HANDLE_RADIUS, 0, Math.PI * 2);
-  ctx.fillStyle = HANDLE_BORDER;
+  ctx.fillStyle = getHandleBorder();
   ctx.fill();
   ctx.beginPath();
   ctx.arc(rotHandleX, rotHandleY, ROTATION_HANDLE_RADIUS - 1.5, 0, Math.PI * 2);
@@ -485,6 +489,17 @@ function drawPreview(ctx: CanvasRenderingContext2D, preview: ToolPreview) {
     case 'marquee':
       ctx.rect(x, y, w, h);
       break;
+
+    case 'eraser': {
+      const r = (preview as any).radius ?? 10;
+      const cx = (preview as any).x ?? 0;
+      const cy = (preview as any).y ?? 0;
+      ctx.strokeStyle = 'rgba(128,128,128,0.5)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      break;
+    }
   }
 
   if (fillColor !== null && fillColor !== undefined) {
@@ -497,6 +512,29 @@ function drawPreview(ctx: CanvasRenderingContext2D, preview: ToolPreview) {
   ctx.restore();
 }
 
+function drawRemoteViewports(
+  ctx: CanvasRenderingContext2D,
+  remoteUsers: RemoteUser[],
+) {
+  for (const user of remoteUsers) {
+    const { camera, cssW, cssH } = user;
+    if (cssW <= 0 || cssH <= 0) continue;
+    const zoom = camera.zoom || 1;
+    const left = camera.x - cssW / (2 * zoom);
+    const top = camera.y - cssH / (2 * zoom);
+    const width = cssW / zoom;
+    const height = cssH / zoom;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(128,128,128,0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([8, 4]);
+    ctx.strokeRect(left, top, width, height);
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+}
+
 export function renderAll(
   ctx: CanvasRenderingContext2D,
   elements: WhiteboardElement[],
@@ -506,6 +544,7 @@ export function renderAll(
   toolPreview: ToolPreview | null,
   cssW: number,
   cssH: number,
+  remoteUsers: Record<number, RemoteUser> = {},
 ) {
   const dpr = window.devicePixelRatio || 1;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -516,6 +555,9 @@ export function renderAll(
   applyCamera(ctx, camera, cssW, cssH);
 
   drawBackgroundGrid(ctx, camera, cssW, cssH);
+
+  const usersList = Object.values(remoteUsers).filter(u => u.pageId === '' || u.camera);
+  drawRemoteViewports(ctx, usersList);
 
   const selectedSet = new Set(selectedIds);
 

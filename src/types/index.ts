@@ -6,6 +6,8 @@ export type ToolbarPosition = 'top' | 'bottom' | 'left' | 'right';
 
 export type ToolbarMode = 'fill' | 'floating';
 
+export type Theme = 'system' | 'light' | 'dark';
+
 export interface Point {
   x: number;
   y: number;
@@ -70,6 +72,14 @@ export interface EraserSettings {
   size: number;
 }
 
+export interface RemoteUser {
+  clientId: number;
+  camera: Camera;
+  cssW: number;
+  cssH: number;
+  pageId: string;
+}
+
 export interface ShapeSettings {
   color: string;
   strokeWidth: number;
@@ -81,6 +91,7 @@ export interface Settings {
   toolbarMode: ToolbarMode;
   showToolbar: boolean;
   serverUrl: string;
+  theme: Theme;
 }
 
 export interface AppState {
@@ -90,6 +101,7 @@ export interface AppState {
   camera: Camera;
   activeTool: ToolType;
   selectedElementIds: string[];
+  remoteUsers: Record<number, RemoteUser>;
   penSettings: PenSettings;
   eraserSettings: EraserSettings;
   shapeSettings: ShapeSettings;

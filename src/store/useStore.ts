@@ -13,6 +13,8 @@ import type {
   ShapeType,
   ToolbarPosition,
   ToolbarMode,
+  Theme,
+  RemoteUser,
   PenSettings,
   EraserSettings,
   ShapeSettings,
@@ -60,6 +62,15 @@ const undoManager = new Y.UndoManager(elementsArray, {
 });
 
 export { doc, wsProvider, undoManager };
+
+export function updateAwareness(camera: Camera, cssW: number, cssH: number, pageId: string) {
+  wsProvider.awareness.setLocalStateField('whiteboard', {
+    camera,
+    cssW,
+    cssH,
+    pageId,
+  });
+}
 
 // ── Y.Map ↔ plain object conversion ─────────────────────────────────────────
 
@@ -233,15 +244,16 @@ export const useStore = create<StoreState>((set, get) => ({
   camera: { x: 0, y: 0, zoom: 1 },
   activeTool: 'select' as ToolType,
   selectedElementIds: [],
+  remoteUsers: {},
   penSettings: {
-    color: '#ffffff',
+    color: '#000000',
     baseWidth: 4,
   },
   eraserSettings: {
-    size: 20,
+    size: 40,
   },
   shapeSettings: {
-    color: '#ffffff',
+    color: '#000000',
     strokeWidth: 3,
     fillColor: null,
   },
@@ -251,6 +263,7 @@ export const useStore = create<StoreState>((set, get) => ({
     toolbarMode: 'fill' as ToolbarMode,
     showToolbar: true,
     serverUrl: DEFAULT_SERVER_URL,
+    theme: 'system' as Theme,
   },
 
   syncElementsForPage: (pageId: string) => {
@@ -289,6 +302,26 @@ export const useStore = create<StoreState>((set, get) => ({
 
     elementsArray.observeDeep(() => {
       get().syncElementsForPage(get().currentPageId);
+    });
+
+    wsProvider.awareness.on('change', () => {
+      const states = wsProvider.awareness.getStates();
+      const mine = wsProvider.awareness.clientID;
+      const users: Record<number, RemoteUser> = {};
+      states.forEach((state, clientId) => {
+        if (clientId === mine) return;
+        const wb = state.whiteboard as any;
+        if (wb && wb.camera && wb.pageId) {
+          users[clientId] = {
+            clientId,
+            camera: wb.camera,
+            cssW: wb.cssW || window.innerWidth,
+            cssH: wb.cssH || window.innerHeight,
+            pageId: wb.pageId,
+          };
+        }
+      });
+      set({ remoteUsers: users });
     });
 
     get().syncElementsForPage(get().currentPageId);

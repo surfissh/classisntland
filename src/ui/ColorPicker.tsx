@@ -43,7 +43,7 @@ const ColorPicker = ({ value, onChange }: ColorPickerProps) => {
             className={`
               w-6 h-6 rounded-full transition-all duration-100
               hover:scale-110 active:scale-95
-              ${value === color ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-neutral-800' : ''}
+              ${value === color ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-gray-50 dark:ring-offset-neutral-800' : ''}
             `}
             style={{ backgroundColor: color }}
             title={color}
@@ -57,10 +57,10 @@ const ColorPicker = ({ value, onChange }: ColorPickerProps) => {
           onChange={(e) => handleHexChange(e.target.value)}
           onBlur={() => setHexInput(value)}
           placeholder="#000000"
-          className="flex-1 bg-neutral-700 border border-neutral-500 rounded px-2 py-1 text-xs text-white font-mono outline-none focus:border-blue-400"
+          className="flex-1 bg-gray-100 dark:bg-neutral-700 border border-gray-300 dark:border-neutral-500 rounded px-2 py-1 text-xs text-gray-900 dark:text-white font-mono outline-none focus:border-blue-400"
         />
         <div
-          className="w-6 h-6 rounded-full border border-neutral-500 shrink-0"
+          className="w-6 h-6 rounded-full border border-gray-300 dark:border-neutral-500 shrink-0"
           style={{ backgroundColor: value }}
         />
       </div>

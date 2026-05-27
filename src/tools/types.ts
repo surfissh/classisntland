@@ -1,11 +1,12 @@
 import type { Camera, Point } from '@/types';
 
 export interface ToolPreview {
-  type: 'pen' | 'rectangle' | 'circle' | 'arc' | 'line' | 'arrow' | 'marquee';
+  type: 'pen' | 'rectangle' | 'circle' | 'arc' | 'line' | 'arrow' | 'marquee' | 'eraser';
   x?: number;
   y?: number;
   width?: number;
   height?: number;
+  radius?: number;
   startAngle?: number;
   endAngle?: number;
   points?: Point[];

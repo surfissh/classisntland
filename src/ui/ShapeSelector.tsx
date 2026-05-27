@@ -24,10 +24,10 @@ const ShapeSelector = ({ value, onChange }: ShapeSelectorProps) => {
           className={`
             w-9 h-9 flex items-center justify-center rounded-lg text-lg
             transition-all duration-100
-            hover:bg-neutral-700 active:scale-95
+            hover:bg-gray-100 dark:hover:bg-neutral-700 active:scale-95
             ${value === type
               ? 'bg-blue-600 ring-2 ring-blue-400 text-white'
-              : 'text-neutral-300'
+              : 'text-gray-700 dark:text-neutral-300'
             }
           `}
         >

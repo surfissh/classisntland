@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --canvas-bg: #ffffff;
+  --grid-color: rgba(128, 128, 128, 0.15);
+  --handle-border: rgba(0, 0, 0, 0.3);
+}
+
+.dark {
+  --canvas-bg: #171717;
+  --grid-color: rgba(128, 128, 128, 0.2);
+  --handle-border: rgba(255, 255, 255, 0.8);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -18,6 +30,11 @@ html, body, #root {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+  color-scheme: light dark;
+}
+
+body {
+  background-color: var(--canvas-bg);
 }
 
 canvas {

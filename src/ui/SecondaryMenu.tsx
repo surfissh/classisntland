@@ -189,12 +189,12 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 bg-neutral-800 border border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-3 min-w-[200px] overflow-y-auto"
+      className="fixed z-50 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-3 min-w-[200px] overflow-y-auto"
       style={position}
     >
       {tool === 'pen' && (
         <>
-          <div className="text-xs text-neutral-400 font-medium uppercase tracking-wide">Pen Settings</div>
+          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">Pen Settings</div>
           <ColorPicker value={penSettings.color} onChange={(c) => setPenSettings({ color: c })} />
           <SizeSlider
             label="Base Width"
@@ -209,12 +209,12 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
 
       {tool === 'eraser' && (
         <>
-          <div className="text-xs text-neutral-400 font-medium uppercase tracking-wide">Eraser Settings</div>
+          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">Eraser Settings</div>
           <SizeSlider
             label="Eraser Size"
             value={eraserSettings.size}
             min={5}
-            max={100}
+            max={200}
             step={1}
             onChange={(v) => setEraserSettings({ size: v })}
           />
@@ -223,7 +223,7 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
 
       {(tool === 'rectangle' || tool === 'circle' || tool === 'arc' || tool === 'line' || tool === 'arrow') && (
         <>
-          <div className="text-xs text-neutral-400 font-medium uppercase tracking-wide">Shape Settings</div>
+          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">Shape Settings</div>
           <ShapeSelector value={shapeType} onChange={setShapeType} />
           <ColorPicker value={shapeSettings.color} onChange={(c) => setShapeSettings({ color: c })} />
           <SizeSlider
@@ -234,19 +234,19 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
             step={1}
             onChange={(v) => setShapeSettings({ strokeWidth: v })}
           />
-          <div className="flex items-center gap-2 text-xs text-neutral-300">
+          <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-neutral-300">
             <span>Fill</span>
             <button
               onClick={() =>
                 setShapeSettings({
-                  fillColor: shapeSettings.fillColor ? null : '#ffffff',
+                  fillColor: shapeSettings.fillColor ? null : '#cccccc',
                 })
               }
               className={`
                 w-6 h-6 rounded border transition-colors
                 ${shapeSettings.fillColor
                   ? 'bg-blue-600 border-blue-400'
-                  : 'border-neutral-500 bg-transparent'}
+                  : 'border-gray-300 dark:border-neutral-500 bg-transparent'}
               `}
             />
             {shapeSettings.fillColor && (
@@ -263,10 +263,10 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
 
       {tool === 'select' && (
         <>
-          <div className="text-xs text-neutral-400 font-medium uppercase tracking-wide">Selection</div>
+          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">Selection</div>
           {selectedElement ? (
             <>
-              <div className="text-xs text-neutral-300">
+              <div className="text-xs text-gray-700 dark:text-neutral-300">
                 {selectedElement.type}
                 {selectedElement.type !== 'pen' && 'shapeType' in selectedElement
                   ? ` / ${selectedElement.shapeType}`
@@ -304,7 +304,7 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
               </button>
             </>
           ) : (
-            <div className="text-xs text-neutral-500">
+            <div className="text-xs text-gray-400 dark:text-neutral-500">
               {selectedElementIds.length === 0
                 ? 'No element selected'
                 : `${selectedElementIds.length} elements selected`}
@@ -315,7 +315,7 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
 
       <button
         onClick={onClose}
-        className="mt-1 w-full py-1 rounded-lg bg-neutral-700 text-neutral-300 text-xs hover:bg-neutral-600 transition-colors"
+        className="mt-1 w-full py-1 rounded-lg bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-neutral-300 text-xs hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors"
       >
         Close
       </button>

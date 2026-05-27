@@ -102,10 +102,10 @@ const SelectionInspector = () => {
   return createPortal(
     <div
       ref={panelRef}
-      className="fixed z-50 bg-neutral-800 border border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-2 min-w-[200px] overflow-y-auto"
+      className="fixed z-50 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-2 min-w-[200px] overflow-y-auto"
       style={{ left: position.left, top: position.top, maxHeight: position.maxHeight }}
     >
-      <div className="text-xs text-neutral-400 font-medium uppercase tracking-wide">
+      <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">
         {selectedElements.length > 1
           ? `${selectedElements.length} elements selected`
           : selectedElement
@@ -140,16 +140,16 @@ const SelectionInspector = () => {
             />
           )}
           {('fillColor' in selectedElement) && (
-            <div className="flex items-center gap-2 text-xs text-neutral-300">
+            <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-neutral-300">
               <span>Fill</span>
               <button
                 onClick={() =>
                   updateElement(selectedElement.id, {
-                    fillColor: (selectedElement as ShapeElement).fillColor ? null : '#ffffff',
+                    fillColor: (selectedElement as ShapeElement).fillColor ? null : '#cccccc',
                   } as any)
                 }
                 className={`w-6 h-6 rounded border transition-colors ${
-                  (selectedElement as ShapeElement).fillColor ? 'bg-blue-600 border-blue-400' : 'border-neutral-500 bg-transparent'
+                  (selectedElement as ShapeElement).fillColor ? 'bg-blue-600 border-blue-400' : 'border-gray-300 dark:border-neutral-500 bg-transparent'
                 }`}
               />
               {(selectedElement as ShapeElement).fillColor && (
@@ -175,7 +175,7 @@ const SelectionInspector = () => {
               }
             }}
           />
-          <div className="text-xs text-neutral-500">Color applies to all</div>
+          <div className="text-xs text-gray-400 dark:text-neutral-500">Color applies to all</div>
         </>
       )}
 

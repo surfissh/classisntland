@@ -1,7 +1,10 @@
 import type { WhiteboardElement, StrokeElement, Point, Camera } from '@/types';
 import { useStore, doc } from '@/store/useStore';
 import { eraserSplit } from '@/utils/eraserSplit';
-import type { ToolHandler } from './types';
+import type { ToolHandler, ToolPreview } from './types';
+
+let lastWorldX: number | null = null;
+let lastWorldY: number | null = null;
 
 function getEraserSettings() {
   return useStore.getState().eraserSettings;
@@ -70,21 +73,45 @@ function scheduleFlush() {
 export const EraserTool: ToolHandler = {
   onPointerDown(_e, worldX, worldY, _camera) {
     flushPending();
+    lastWorldX = worldX;
+    lastWorldY = worldY;
     const size = getEraserSettings().size;
     pendingCircles.push({ x: worldX, y: worldY, radius: size / 2 });
     scheduleFlush();
   },
 
   onPointerMove(_e, worldX, worldY, _camera) {
+    lastWorldX = worldX;
+    lastWorldY = worldY;
     const size = getEraserSettings().size;
     pendingCircles.push({ x: worldX, y: worldY, radius: size / 2 });
     scheduleFlush();
   },
 
   onPointerUp(_e, worldX, worldY, _camera) {
+    lastWorldX = worldX;
+    lastWorldY = worldY;
     const size = getEraserSettings().size;
     pendingCircles.push({ x: worldX, y: worldY, radius: size / 2 });
     flushPending();
+  },
+
+  getPreview(): ToolPreview | null {
+    if (lastWorldX === null || lastWorldY === null) return null;
+    const size = getEraserSettings().size;
+    return {
+      type: 'eraser',
+      x: lastWorldX,
+      y: lastWorldY,
+      radius: size / 2,
+      opacity: 0.5,
+    };
+  },
+
+  onDeactivate() {
+    flushPending();
+    lastWorldX = null;
+    lastWorldY = null;
   },
 };
 

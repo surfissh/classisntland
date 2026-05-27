@@ -51,7 +51,7 @@ const ToolButton = ({ icon, label, isActive, onClick, onDoubleClick }: ToolButto
           hover:brightness-110 active:scale-95
           ${isActive
             ? 'bg-blue-600 ring-2 ring-blue-400 text-white'
-            : 'bg-transparent text-neutral-300 hover:bg-neutral-700'
+            : 'bg-transparent text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700'
           }
           p-2 min-w-[40px] h-10
         `}
@@ -63,7 +63,7 @@ const ToolButton = ({ icon, label, isActive, onClick, onDoubleClick }: ToolButto
         createPortal(
           <div
             style={tooltipStyle}
-            className="px-2 py-1 text-xs rounded-md bg-neutral-800 text-white border border-neutral-600 shadow-lg whitespace-nowrap z-50 pointer-events-none"
+            className="px-2 py-1 text-xs rounded-md bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-white border border-gray-200 dark:border-neutral-600 shadow-lg whitespace-nowrap z-50 pointer-events-none"
           >
             {label}
           </div>,

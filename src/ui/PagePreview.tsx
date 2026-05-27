@@ -177,13 +177,13 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-center justify-center">
+    <div className="fixed inset-0 z-[90] bg-black/30 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center">
       <div
         ref={panelRef}
-        className="bg-neutral-800 border border-neutral-600 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 max-w-2xl w-full mx-4 max-h-[80vh]"
+        className="bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 max-w-2xl w-full mx-4 max-h-[80vh]"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-white font-semibold text-lg">Pages</h2>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Pages</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={addPage}
@@ -193,7 +193,7 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors"
+              className="p-1.5 rounded-lg text-gray-500 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -215,7 +215,7 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
                   key={page.id}
                   className={`
                     relative rounded-lg overflow-hidden border-2 transition-all cursor-pointer
-                    ${isActive ? 'border-blue-500' : 'border-neutral-700 hover:border-neutral-500'}
+                    ${isActive ? 'border-blue-500' : 'border-gray-200 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-500'}
                   `}
                 >
                   <div
@@ -223,7 +223,7 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
                       setCurrentPage(page.id);
                       onClose();
                     }}
-                    className="w-full h-[100px] bg-neutral-900 flex items-center justify-center"
+                    className="w-full h-[100px] bg-white dark:bg-neutral-900 flex items-center justify-center"
                   >
                     {previewSrc ? (
                       <img
@@ -232,10 +232,10 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
                         className="w-full h-full object-contain"
                       />
                     ) : (
-                      <span className="text-neutral-600 text-xs">{page.name}</span>
+                      <span className="text-gray-400 dark:text-neutral-600 text-xs">{page.name}</span>
                     )}
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-neutral-900/80 backdrop-blur-sm px-2 py-1 text-xs text-neutral-300 flex items-center justify-between">
+                  <div className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm px-2 py-1 text-xs text-gray-700 dark:text-neutral-300 flex items-center justify-between">
                     <span className="truncate">{page.name}</span>
                     {canDelete && (
                       <button
@@ -243,7 +243,7 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
                           e.stopPropagation();
                           deletePage(page.id);
                         }}
-                        className="text-neutral-500 hover:text-red-400 transition-colors shrink-0 ml-1"
+                        className="text-gray-400 dark:text-neutral-500 hover:text-red-400 transition-colors shrink-0 ml-1"
                         title="Delete page"
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

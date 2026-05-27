@@ -38,7 +38,7 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
       <button
         onClick={goToPrev}
         disabled={currentIndex === 0}
-        className="p-1.5 flex justify-center rounded-lg text-neutral-300 hover:bg-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+        className="p-1.5 flex justify-center rounded-lg text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
         title="Previous page"
       >
         {isVertical ? (
@@ -54,7 +54,7 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
 
       <button
         onClick={() => setShowPreview(true)}
-        className="px-2 py-1 rounded-lg text-xs text-neutral-300 hover:bg-neutral-700 transition-all active:scale-95 font-mono whitespace-nowrap"
+        className="px-2 py-1 rounded-lg text-xs text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-all active:scale-95 font-mono whitespace-nowrap"
         title="Show all pages"
       >
         {pageLabel}
@@ -62,7 +62,7 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
 
       <button
         onClick={goToNext}
-        className="p-1.5 flex justify-center rounded-lg text-neutral-300 hover:bg-neutral-700 transition-all active:scale-95"
+        className="p-1.5 flex justify-center rounded-lg text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-all active:scale-95"
         title={isLastPage ? 'Add page' : 'Next page'}
       >
         {isLastPage ? (
