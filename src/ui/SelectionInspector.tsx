@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import useStore from '@/store/useStore';
 import type { WhiteboardElement, StrokeElement, ShapeElement, Camera } from '@/types';
@@ -58,7 +58,8 @@ const SelectionInspector = () => {
   const updateElement = useStore((s) => s.updateElement);
   const deleteElements = useStore((s) => s.deleteElements);
 
-  const [position, setPosition] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
+  const [position, setPosition] = useState<{ left: number; top: number; maxHeight: number }>({ left: 0, top: 0, maxHeight: 400 });
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const selectedElements = useMemo(() => {
     if (selectedElementIds.length === 0) return [];
@@ -75,20 +76,23 @@ const SelectionInspector = () => {
     const cssH = window.innerHeight;
 
     const bottomCenter = worldToScreen(bounds.cx, bounds.y + bounds.height, camera, cssW, cssH);
+    const aboveCenter = worldToScreen(bounds.cx, bounds.y, camera, cssW, cssH);
 
     const panelW = 220;
-    const panelH = 280;
+    const panelMinH = 180;
     let left = bottomCenter.x - panelW / 2;
     let top = bottomCenter.y + 16;
 
-    if (left < 8) left = 8;
-    if (left + panelW > cssW - 8) left = cssW - panelW - 8;
-    if (top + panelH > cssH - 8) {
-      top = bottomCenter.y - panelH - 24;
-      if (top < 8) top = 8;
+    left = Math.max(8, Math.min(left, cssW - panelW - 8));
+
+    if (top + panelMinH > cssH - 8) {
+      const aboveTop = aboveCenter.y - panelMinH - 16;
+      top = aboveTop >= 8 ? aboveTop : 8;
     }
 
-    setPosition({ left, top });
+    top = Math.max(8, Math.min(top, cssH - panelMinH - 8));
+
+    setPosition({ left, top, maxHeight: cssH - top - 8 });
   }, [selectedElements, camera]);
 
   if (selectedElements.length === 0) return null;
@@ -97,8 +101,9 @@ const SelectionInspector = () => {
 
   return createPortal(
     <div
-      className="fixed z-50 bg-neutral-800 border border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-2 min-w-[200px]"
-      style={{ left: position.left, top: position.top }}
+      ref={panelRef}
+      className="fixed z-50 bg-neutral-800 border border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-2 min-w-[200px] overflow-y-auto"
+      style={{ left: position.left, top: position.top, maxHeight: position.maxHeight }}
     >
       <div className="text-xs text-neutral-400 font-medium uppercase tracking-wide">
         {selectedElements.length > 1
@@ -183,16 +188,6 @@ const SelectionInspector = () => {
         className="w-full py-1.5 rounded-lg bg-red-600/20 text-red-400 text-xs hover:bg-red-600/40 transition-colors"
       >
         Delete {selectedElements.length > 1 ? `(${selectedElements.length})` : ''}
-      </button>
-
-      <button
-        onClick={() => {
-          const pageElements = useStore.getState().elements[useStore.getState().currentPageId] || [];
-          useStore.getState().setSelectedElementIds(pageElements.map((e) => e.id));
-        }}
-        className="w-full py-1.5 rounded-lg bg-neutral-700 text-neutral-300 text-xs hover:bg-neutral-600 transition-colors"
-      >
-        Select All
       </button>
     </div>,
     document.body

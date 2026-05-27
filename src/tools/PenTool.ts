@@ -71,6 +71,16 @@ function getPenSettings() {
 }
 
 export const PenTool: ToolHandler = {
+  abort() {
+    flushPoints();
+    if (state.currentId !== null) {
+      useStore.getState().deleteElement(state.currentId);
+    }
+    state.currentId = null;
+    state.points = [];
+    state.lastPoint = null;
+  },
+
   onPointerDown(_e, worldX, worldY, _camera) {
     flushPoints();
     const settings = getPenSettings();

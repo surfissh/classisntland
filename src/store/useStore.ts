@@ -57,7 +57,6 @@ let wsProvider = new WebsocketProvider(initialServerUrl, initialRoom, doc, {
 const elementsArray = doc.getArray('elements');
 const undoManager = new Y.UndoManager(elementsArray, {
   trackedOrigins: new Set([null]),
-  captureTimeout: 500,
 });
 
 export { doc, wsProvider, undoManager };
@@ -201,7 +200,7 @@ interface StoreState extends AppState {
   appendPointsToStroke: (strokeId: string, points: Point[]) => void;
   deletePointRange: (strokeId: string, start: number, count: number) => void;
   replaceStrokePoints: (strokeId: string, points: Point[]) => void;
-  updateElement: (id: string, changes: Partial<WhiteboardElement>) => void;
+  updateElement: (id: string, changes: Partial<WhiteboardElement> & { points?: { x: number; y: number; pressure: number }[] }) => void;
   deleteElement: (id: string) => void;
   deleteElements: (ids: string[]) => void;
   clearPage: () => void;
@@ -237,8 +236,6 @@ export const useStore = create<StoreState>((set, get) => ({
   penSettings: {
     color: '#ffffff',
     baseWidth: 4,
-    minWidth: 2,
-    maxWidth: 12,
   },
   eraserSettings: {
     size: 20,
@@ -383,6 +380,20 @@ export const useStore = create<StoreState>((set, get) => ({
         }
       }
       delete changes.style;
+    }
+
+    const points = changes.points;
+    if (points !== undefined) {
+      const pointsArr = m.get('points') as Y.Array<Y.Map<any>>;
+      if (pointsArr) {
+        doc.transact(() => {
+          pointsArr.delete(0, pointsArr.length);
+          for (const p of points) {
+            pointsArr.push([pointToYMap(p)]);
+          }
+        });
+      }
+      delete changes.points;
     }
 
     for (const [key, value] of Object.entries(changes)) {

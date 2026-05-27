@@ -64,7 +64,7 @@ function strokePen(ctx: CanvasRenderingContext2D, el: StrokeElement) {
   }
 
   if (pts.length === 1) {
-    const w = pts[0].pressure * el.baseWidth;
+    const w = Math.max(el.baseWidth * 0.5, pts[0].pressure * el.baseWidth);
     ctx.beginPath();
     ctx.arc(pts[0].x, pts[0].y, w / 2, 0, Math.PI * 2);
     ctx.fillStyle = el.style.color;
@@ -76,7 +76,7 @@ function strokePen(ctx: CanvasRenderingContext2D, el: StrokeElement) {
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[i];
     const p1 = pts[i + 1];
-    const w = ((p0.pressure + p1.pressure) / 2) * el.baseWidth;
+    const w = Math.max(el.baseWidth * 0.5, ((p0.pressure + p1.pressure) / 2) * el.baseWidth);
 
     ctx.beginPath();
     ctx.lineWidth = w;
@@ -359,7 +359,7 @@ function drawSelectionHandles(
   cssH: number,
 ) {
   const rb = getRotatedBounds(el);
-  drawSelectionBox(ctx, { x: rb.x, y: rb.y, width: rb.width, height: rb.height }, camera, cssW, cssH);
+  drawSelectionBox(ctx, { x: rb.x, y: rb.y, width: rb.width, height: rb.height }, camera, cssW, cssH, rb.cx, rb.cy);
 }
 
 function drawPreview(ctx: CanvasRenderingContext2D, preview: ToolPreview) {
@@ -449,7 +449,7 @@ function drawPreview(ctx: CanvasRenderingContext2D, preview: ToolPreview) {
       if (!pts || pts.length === 0) break;
       const bw = baseWidth ?? strokeWidth;
       if (pts.length === 1) {
-        const dotW = pts[0].pressure * bw;
+        const dotW = Math.max(bw * 0.5, pts[0].pressure * bw);
         ctx.arc(pts[0].x, pts[0].y, dotW / 2, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
@@ -457,7 +457,7 @@ function drawPreview(ctx: CanvasRenderingContext2D, preview: ToolPreview) {
         for (let i = 0; i < pts.length - 1; i++) {
           const p0 = pts[i];
           const p1 = pts[i + 1];
-          const segW = ((p0.pressure + p1.pressure) / 2) * bw;
+          const segW = Math.max(bw * 0.5, ((p0.pressure + p1.pressure) / 2) * bw);
           ctx.beginPath();
           ctx.lineWidth = segW;
           if (i === 0) {

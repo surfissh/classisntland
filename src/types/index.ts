@@ -64,8 +64,6 @@ export interface Page {
 export interface PenSettings {
   color: string;
   baseWidth: number;
-  minWidth: number;
-  maxWidth: number;
 }
 
 export interface EraserSettings {

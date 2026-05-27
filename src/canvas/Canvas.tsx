@@ -192,6 +192,8 @@ export default function Canvas() {
         worldMidX: (midX - cssW / 2) / cam.zoom + cam.x,
         worldMidY: (midY - cssH / 2) / cam.zoom + cam.y,
       };
+      const tool = toolRegistry.get(useStore.getState().activeTool);
+      tool?.abort?.();
       return;
     }
 
@@ -303,23 +305,24 @@ export default function Canvas() {
     e.preventDefault();
   }, []);
 
-  const handleBlur = useCallback(() => {
-    useStore.getState().setSelectedElementIds([]);
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const tool = toolRegistry.get(useStore.getState().activeTool);
+    tool?.onKeyDown?.(e.nativeEvent);
+    dirtyRef.current = true;
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 bg-neutral-900"
+      className="fixed inset-0 bg-neutral-900 outline-none"
       style={{ touchAction: 'none' }}
-      tabIndex={0}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onWheel={handleWheel}
       onContextMenu={handleContextMenu}
-      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
     />
   );
 }

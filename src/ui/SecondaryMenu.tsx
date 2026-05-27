@@ -58,25 +58,108 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
     const updatePosition = () => {
       const rect = buttonRef.current!.getBoundingClientRect();
       const toolbarPosition = useStore.getState().settings.toolbarPosition;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
 
-      let style: React.CSSProperties = {};
+      const menuW = 220;
+      const menuMinH = 200;
+      const gap = 8;
+      let top: number | undefined;
+      let bottom: number | undefined;
+      let left: number | undefined;
+      let right: number | undefined;
+      let maxH = vh - 16;
 
       switch (toolbarPosition) {
-        case 'top':
-          style = { position: 'fixed', top: rect.bottom + 8, left: rect.left };
+        case 'top': {
+          left = rect.left;
+          top = rect.bottom + gap;
+          if (top + menuMinH > vh - 8) {
+            top = Math.max(8, rect.top - menuMinH - gap);
+          }
+          if (left + menuW > vw - 8) {
+            left = Math.max(8, vw - menuW - 8);
+          }
+          top = Math.max(8, Math.min(top, vh - menuMinH - 8));
+          maxH = vh - top - 8;
           break;
-        case 'bottom':
-          style = { position: 'fixed', bottom: window.innerHeight - rect.top + 8, left: rect.left };
+        }
+        case 'bottom': {
+          const aboveTop = rect.top - menuMinH - gap;
+          if (aboveTop >= 8) {
+            left = rect.left;
+            bottom = vh - rect.top + gap;
+            maxH = rect.top - bottom! - gap;
+          } else {
+            left = rect.left;
+            const belowTop = rect.bottom + gap;
+            top = belowTop;
+            if (belowTop + menuMinH > vh - 8) {
+              top = Math.max(8, aboveTop);
+            }
+            maxH = vh - top - 8;
+          }
+          if (left + menuW > vw - 8) {
+            left = Math.max(8, vw - menuW - 8);
+          }
+          if (bottom !== undefined) {
+            bottom = Math.max(8, Math.min(bottom, vh - 8));
+          } else {
+            top = Math.max(8, Math.min(top!, vh - menuMinH - 8));
+          }
           break;
-        case 'left':
-          style = { position: 'fixed', top: rect.top, left: rect.right + 8 };
+        }
+        case 'left': {
+          left = rect.right + gap;
+          top = rect.top;
+          if (top + menuMinH > vh - 8) {
+            top = Math.max(8, vh - menuMinH - 8);
+          }
+          if (left + menuW > vw - 8) {
+            left = Math.max(8, rect.left - menuW - gap);
+          }
+          top = Math.max(8, Math.min(top, vh - menuMinH - 8));
+          maxH = vh - top - 8;
           break;
-      case 'right':
-        style = { position: 'fixed', top: rect.top, right: window.innerWidth - rect.left + 8 };
-        break;
-        default:
-          style = { position: 'fixed', bottom: window.innerHeight - rect.top + 8, left: rect.left };
+        }
+        case 'right': {
+          top = rect.top;
+          right = vw - rect.left + gap;
+          if (top + menuMinH > vh - 8) {
+            top = Math.max(8, vh - menuMinH - 8);
+          }
+          if (rect.left - menuW - gap < 8) {
+            right = undefined;
+            left = Math.max(8, rect.right + gap);
+          }
+          top = Math.max(8, Math.min(top, vh - menuMinH - 8));
+          maxH = vh - top - 8;
+          break;
+        }
+        default: {
+          const aboveTop = rect.top - menuMinH - gap;
+          if (aboveTop >= 8) {
+            left = rect.left;
+            bottom = vh - rect.top + gap;
+            maxH = rect.top - (bottom ?? 0) - gap;
+          } else {
+            left = rect.left;
+            top = Math.max(8, rect.bottom + gap);
+            maxH = vh - top - 8;
+          }
+          break;
+        }
       }
+
+      const style: React.CSSProperties = {
+        position: 'fixed',
+        maxHeight: `${Math.max(40, maxH)}px`,
+        overflowY: 'auto',
+      };
+      if (top !== undefined) style.top = top;
+      if (bottom !== undefined) style.bottom = bottom;
+      if (left !== undefined) style.left = left;
+      if (right !== undefined) style.right = right;
 
       setPosition(style);
     };
@@ -106,7 +189,7 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 bg-neutral-800 border border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-3 min-w-[200px]"
+      className="fixed z-50 bg-neutral-800 border border-neutral-600 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-3 min-w-[200px] overflow-y-auto"
       style={position}
     >
       {tool === 'pen' && (
@@ -120,22 +203,6 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
             max={20}
             step={1}
             onChange={(v) => setPenSettings({ baseWidth: v })}
-          />
-          <SizeSlider
-            label="Min Width"
-            value={penSettings.minWidth}
-            min={0.5}
-            max={penSettings.baseWidth}
-            step={0.5}
-            onChange={(v) => setPenSettings({ minWidth: v })}
-          />
-          <SizeSlider
-            label="Max Width"
-            value={penSettings.maxWidth}
-            min={penSettings.baseWidth}
-            max={30}
-            step={0.5}
-            onChange={(v) => setPenSettings({ maxWidth: v })}
           />
         </>
       )}
@@ -243,15 +310,6 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
                 : `${selectedElementIds.length} elements selected`}
             </div>
           )}
-          <button
-            onClick={() => {
-              const pageElements = useStore.getState().elements[useStore.getState().currentPageId] || [];
-              useStore.getState().setSelectedElementIds(pageElements.map((e) => e.id));
-            }}
-            className="w-full py-1.5 rounded-lg bg-neutral-700 text-neutral-300 text-xs hover:bg-neutral-600 transition-colors"
-          >
-            Select All
-          </button>
         </>
       )}
 

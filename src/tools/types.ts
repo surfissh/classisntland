@@ -25,4 +25,5 @@ export interface ToolHandler {
   getPreview?(): ToolPreview | null;
   onActivate?(): void;
   onDeactivate?(): void;
+  abort?(): void;
 }
