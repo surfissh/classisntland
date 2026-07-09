@@ -107,10 +107,10 @@ const SelectionInspector = () => {
     >
       <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">
         {selectedElements.length > 1
-          ? `${selectedElements.length} elements selected`
+          ? `已选中 ${selectedElements.length} 个元素`
           : selectedElement
             ? `${selectedElement.type}${selectedElement.type !== 'pen' && 'shapeType' in selectedElement ? ` / ${(selectedElement as ShapeElement).shapeType}` : ''}`
-            : 'Selection'}
+            : '选择'}
       </div>
 
       {selectedElement && (
@@ -121,7 +121,7 @@ const SelectionInspector = () => {
           />
           {'strokeWidth' in selectedElement && (
             <SizeSlider
-              label="Stroke Width"
+              label="线条宽度"
               value={(selectedElement as ShapeElement).strokeWidth}
               min={1}
               max={20}
@@ -131,7 +131,7 @@ const SelectionInspector = () => {
           )}
           {'baseWidth' in selectedElement && (
             <SizeSlider
-              label="Base Width"
+              label="笔触宽度"
               value={(selectedElement as StrokeElement).baseWidth}
               min={1}
               max={20}
@@ -141,7 +141,7 @@ const SelectionInspector = () => {
           )}
           {('fillColor' in selectedElement) && (
             <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-neutral-300">
-              <span>Fill</span>
+              <span>填充</span>
               <button
                 onClick={() =>
                   updateElement(selectedElement.id, {
@@ -175,7 +175,7 @@ const SelectionInspector = () => {
               }
             }}
           />
-          <div className="text-xs text-gray-400 dark:text-neutral-500">Color applies to all</div>
+          <div className="text-xs text-gray-400 dark:text-neutral-500">颜色将应用于全部</div>
         </>
       )}
 
@@ -187,7 +187,7 @@ const SelectionInspector = () => {
         }}
         className="w-full py-1.5 rounded-lg bg-red-600/20 text-red-400 text-xs hover:bg-red-600/40 transition-colors"
       >
-        Delete {selectedElements.length > 1 ? `(${selectedElements.length})` : ''}
+        删除 {selectedElements.length > 1 ? `(${selectedElements.length})` : ''}
       </button>
     </div>,
     document.body

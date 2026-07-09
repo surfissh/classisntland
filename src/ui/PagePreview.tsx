@@ -183,13 +183,13 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
         className="bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 max-w-2xl w-full mx-4 max-h-[80vh]"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Pages</h2>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">页面</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={addPage}
               className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs hover:brightness-110 active:scale-95 transition-all"
             >
-              + New Page
+              + 新建页面
             </button>
             <button
               onClick={onClose}
@@ -244,7 +244,7 @@ const PagePreview = ({ onClose }: PagePreviewProps) => {
                           deletePage(page.id);
                         }}
                         className="text-gray-400 dark:text-neutral-500 hover:text-red-400 transition-colors shrink-0 ml-1"
-                        title="Delete page"
+                        title="删除页面"
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="3 6 5 6 21 6" />

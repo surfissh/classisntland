@@ -12,7 +12,7 @@ import SettingsPanel from './SettingsPanel';
 const TOOLS: { type: ToolType; icon: React.ReactNode; label: string }[] = [
   {
     type: 'select',
-    label: 'Select',
+    label: '选择',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" />
@@ -22,7 +22,7 @@ const TOOLS: { type: ToolType; icon: React.ReactNode; label: string }[] = [
   },
   {
     type: 'pen',
-    label: 'Pen',
+    label: '画笔',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -31,7 +31,7 @@ const TOOLS: { type: ToolType; icon: React.ReactNode; label: string }[] = [
   },
   {
     type: 'eraser',
-    label: 'Eraser',
+    label: '橡皮',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 20H7L3 16a2 2 0 0 1 0-2.83l8.59-8.59a2 2 0 0 1 2.82 0l3.42 3.41a2 2 0 0 1 0 2.83L12 16" />
@@ -41,7 +41,7 @@ const TOOLS: { type: ToolType; icon: React.ReactNode; label: string }[] = [
   },
   {
     type: 'rectangle',
-    label: 'Shapes',
+    label: '形状',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -148,7 +148,7 @@ const Toolbar = () => {
           setSettings({ showToolbar: true });
         }}
         className="fixed bottom-4 right-4 z-50 w-10 h-10 rounded-full bg-gray-50/90 dark:bg-neutral-800/90 border border-gray-200 dark:border-neutral-600 shadow-xl flex items-center justify-center text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 backdrop-blur-md transition-all active:scale-95"
-        title="Show toolbar"
+        title="显示工具栏"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -167,7 +167,7 @@ const Toolbar = () => {
         <button
           onClick={toggleFullscreen}
           className="p-2 rounded-lg text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-all active:scale-95 select-none"
-          title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          title={isFullscreen ? '退出全屏' : '进入全屏'}
         >
           {isFullscreen ? (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -188,7 +188,7 @@ const Toolbar = () => {
         <button
           onClick={() => setShowSettings(true)}
           className="p-2 rounded-lg text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-all active:scale-95 select-none"
-          title="Settings"
+          title="设置"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3" />

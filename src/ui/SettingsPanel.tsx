@@ -43,6 +43,10 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
   const modes: ToolbarMode[] = ['fill', 'floating'];
   const themes: Theme[] = ['system', 'light', 'dark'];
 
+  const positionLabels: Record<string, string> = { top: '顶部', bottom: '底部', left: '左侧', right: '右侧' };
+  const modeLabels: Record<string, string> = { fill: '填充', floating: '浮动' };
+  const themeLabels: Record<string, string> = { system: '跟随系统', light: '浅色', dark: '深色' };
+
   const handleReconnect = () => {
     setSettings({ serverUrl: serverUrlInput });
     reconnectToServer(serverUrlInput);
@@ -63,7 +67,7 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
         className="bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-600 rounded-2xl p-6 shadow-2xl w-96 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">Settings</h2>
+          <h2 className="text-gray-900 dark:text-white font-semibold text-lg">设置</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-gray-500 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -76,7 +80,7 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">Toolbar Position</span>
+          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">工具栏位置</span>
           <div className="flex gap-1">
             {positions.map((pos) => (
               <button
@@ -89,14 +93,14 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
                     : 'bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-600'}
                 `}
               >
-                {pos}
+                {positionLabels[pos] || pos}
               </button>
             ))}
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">Toolbar Mode</span>
+          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">工具栏模式</span>
           <div className="flex gap-1">
             {modes.map((mode) => (
               <button
@@ -109,14 +113,14 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
                     : 'bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-600'}
                 `}
               >
-                {mode}
+                {modeLabels[mode] || mode}
               </button>
             ))}
           </div>
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">Show Toolbar</span>
+          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">显示工具栏</span>
           <button
             onClick={() => setSettings({ showToolbar: !settings.showToolbar })}
             className={`
@@ -134,7 +138,7 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">Theme</span>
+          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">主题</span>
           <div className="flex gap-1">
             {themes.map((theme) => (
               <button
@@ -147,24 +151,24 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
                     : 'bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-600'}
                 `}
               >
-                {theme}
+                {themeLabels[theme] || theme}
               </button>
             ))}
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">Fullscreen</span>
+          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">全屏</span>
           <button
             onClick={toggleFullscreen}
             className="w-full py-2 rounded-lg text-sm bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors"
           >
-            {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            {isFullscreen ? '退出全屏' : '进入全屏'}
           </button>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">Server Connection</span>
+          <span className="text-xs text-gray-500 dark:text-neutral-400 uppercase tracking-wide font-medium">服务器连接</span>
           <div className="flex gap-2">
             <input
               type="text"
@@ -177,7 +181,7 @@ const SettingsPanel = ({ onClose }: SettingsPanelProps) => {
               onClick={handleReconnect}
               className="px-3 py-1.5 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-500 transition-colors whitespace-nowrap"
             >
-              Connect
+              连接
             </button>
           </div>
         </div>

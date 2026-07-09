@@ -6,11 +6,11 @@ interface ShapeSelectorProps {
 }
 
 const SHAPES: { type: ShapeType; icon: string; label: string }[] = [
-  { type: 'rectangle', icon: '▭', label: 'Rectangle' },
-  { type: 'circle', icon: '○', label: 'Circle' },
-  { type: 'arc', icon: '◠', label: 'Arc' },
-  { type: 'line', icon: '╱', label: 'Line' },
-  { type: 'arrow', icon: '→', label: 'Arrow' },
+  { type: 'rectangle', icon: '▭', label: '矩形' },
+  { type: 'circle', icon: '○', label: '圆形' },
+  { type: 'arc', icon: '◠', label: '弧线' },
+  { type: 'line', icon: '╱', label: '直线' },
+  { type: 'arrow', icon: '→', label: '箭头' },
 ];
 
 const ShapeSelector = ({ value, onChange }: ShapeSelectorProps) => {

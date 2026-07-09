@@ -33,7 +33,10 @@ function parseServerUrl(url: string): { serverUrl: string; room: string } {
   }
 }
 
-const DEFAULT_SERVER_URL = 'ws://localhost:1234/whiteboard';
+function getDefaultServerUrl(): string {
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  return `ws://${hostname}:1234/whiteboard`;
+}
 
 function getSavedServerUrl(): string {
   try {
@@ -45,7 +48,17 @@ function getSavedServerUrl(): string {
       }
     }
   } catch {}
-  return DEFAULT_SERVER_URL;
+  return getDefaultServerUrl();
+}
+
+function isDarkMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  return document.documentElement.classList.contains('dark') ||
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function defaultColor(): string {
+  return isDarkMode() ? '#ffffff' : '#000000';
 }
 
 const { serverUrl: initialServerUrl, room: initialRoom } = parseServerUrl(getSavedServerUrl());
@@ -246,14 +259,14 @@ export const useStore = create<StoreState>((set, get) => ({
   selectedElementIds: [],
   remoteUsers: {},
   penSettings: {
-    color: '#000000',
+    color: defaultColor(),
     baseWidth: 4,
   },
   eraserSettings: {
     size: 40,
   },
   shapeSettings: {
-    color: '#000000',
+    color: defaultColor(),
     strokeWidth: 3,
     fillColor: null,
   },
@@ -262,7 +275,7 @@ export const useStore = create<StoreState>((set, get) => ({
     toolbarPosition: 'bottom' as ToolbarPosition,
     toolbarMode: 'fill' as ToolbarMode,
     showToolbar: true,
-    serverUrl: DEFAULT_SERVER_URL,
+    serverUrl: getDefaultServerUrl(),
     theme: 'system' as Theme,
   },
 

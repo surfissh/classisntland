@@ -194,10 +194,10 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
     >
       {tool === 'pen' && (
         <>
-          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">Pen Settings</div>
+          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">画笔设置</div>
           <ColorPicker value={penSettings.color} onChange={(c) => setPenSettings({ color: c })} />
           <SizeSlider
-            label="Base Width"
+            label="笔触宽度"
             value={penSettings.baseWidth}
             min={1}
             max={20}
@@ -209,9 +209,9 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
 
       {tool === 'eraser' && (
         <>
-          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">Eraser Settings</div>
+          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">橡皮设置</div>
           <SizeSlider
-            label="Eraser Size"
+            label="橡皮大小"
             value={eraserSettings.size}
             min={5}
             max={200}
@@ -223,11 +223,11 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
 
       {(tool === 'rectangle' || tool === 'circle' || tool === 'arc' || tool === 'line' || tool === 'arrow') && (
         <>
-          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">Shape Settings</div>
+          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">形状设置</div>
           <ShapeSelector value={shapeType} onChange={setShapeType} />
           <ColorPicker value={shapeSettings.color} onChange={(c) => setShapeSettings({ color: c })} />
           <SizeSlider
-            label="Stroke Width"
+            label="线条宽度"
             value={shapeSettings.strokeWidth}
             min={1}
             max={20}
@@ -235,7 +235,7 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
             onChange={(v) => setShapeSettings({ strokeWidth: v })}
           />
           <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-neutral-300">
-            <span>Fill</span>
+            <span>填充</span>
             <button
               onClick={() =>
                 setShapeSettings({
@@ -263,7 +263,7 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
 
       {tool === 'select' && (
         <>
-          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">Selection</div>
+          <div className="text-xs text-gray-500 dark:text-neutral-400 font-medium uppercase tracking-wide">选择</div>
           {selectedElement ? (
             <>
               <div className="text-xs text-gray-700 dark:text-neutral-300">
@@ -278,7 +278,7 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
               />
               {'strokeWidth' in selectedElement && (
                 <SizeSlider
-                  label="Stroke Width"
+                  label="线条宽度"
                   value={selectedElement.strokeWidth}
                   min={1}
                   max={20}
@@ -288,7 +288,7 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
               )}
               {'baseWidth' in selectedElement && (
                 <SizeSlider
-                  label="Base Width"
+                  label="笔触宽度"
                   value={selectedElement.baseWidth}
                   min={1}
                   max={20}
@@ -300,14 +300,14 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
                 onClick={handleDelete}
                 className="w-full py-1.5 rounded-lg bg-red-600/20 text-red-400 text-xs hover:bg-red-600/40 transition-colors"
               >
-                Delete Selected
+                删除选中
               </button>
             </>
           ) : (
             <div className="text-xs text-gray-400 dark:text-neutral-500">
               {selectedElementIds.length === 0
-                ? 'No element selected'
-                : `${selectedElementIds.length} elements selected`}
+                ? '未选中元素'
+                : `已选中 ${selectedElementIds.length} 个元素`}
             </div>
           )}
         </>
@@ -317,7 +317,7 @@ const SecondaryMenu = ({ tool, onClose, buttonRef }: SecondaryMenuProps) => {
         onClick={onClose}
         className="mt-1 w-full py-1 rounded-lg bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-neutral-300 text-xs hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors"
       >
-        Close
+        关闭
       </button>
     </div>
   );

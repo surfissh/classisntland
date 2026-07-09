@@ -39,7 +39,7 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
         onClick={goToPrev}
         disabled={currentIndex === 0}
         className="p-1.5 flex justify-center rounded-lg text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
-        title="Previous page"
+        title="上一页"
       >
         {isVertical ? (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -55,7 +55,7 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
       <button
         onClick={() => setShowPreview(true)}
         className="px-2 py-1 rounded-lg text-xs text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-all active:scale-95 font-mono whitespace-nowrap"
-        title="Show all pages"
+        title="显示所有页面"
       >
         {pageLabel}
       </button>
@@ -63,7 +63,7 @@ const PageManager = ({ isVertical }: PageManagerProps) => {
       <button
         onClick={goToNext}
         className="p-1.5 flex justify-center rounded-lg text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-all active:scale-95"
-        title={isLastPage ? 'Add page' : 'Next page'}
+        title={isLastPage ? '添加页面' : '下一页'}
       >
         {isLastPage ? (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

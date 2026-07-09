@@ -3,12 +3,12 @@
 ## Quickstart
 
 ```bash
-npm run server   # Terminal 1: start YJS WebSocket sync server (ws://localhost:1234)
-npm run dev      # Terminal 2: start Vite dev server (http://localhost:5173)
+bun run server   # Terminal 1: start YJS WebSocket sync server (ws://localhost:1234)
+bun run dev      # Terminal 2: start Vite dev server (http://localhost:5173)
 ```
 
-- `npx tsc --noEmit` — typecheck only (no emit)
-- `npm run build` — `tsc -b && vite build`
+- `bun run tsc --noEmit` — typecheck only (no emit)
+- `bun run build` — `tsc -b && vite build`
 
 ## Architecture
 
@@ -51,14 +51,17 @@ npm run dev      # Terminal 2: start Vite dev server (http://localhost:5173)
 - `SecondaryMenu.tsx` — per-tool contextual menu (second click on active tool)
 - `PagePreview.tsx` — SVG-based page thumbnail rendering
 - All UI uses Tailwind utility classes only; dark theme (neutral-800/900)
+- All UI text is in **Chinese** (`src/ui/` files translate labels, tooltips, and button text)
 
 ### Server (`server/index.js`)
 - Uses `y-websocket/bin/utils.js` `setupWSConnection`
 - HTTP + WebSocket on port 1234
 - Room name: `whiteboard`
+- **Client default WS URL**: `ws://<page hostname>:1234/whiteboard` (derived from `window.location.hostname`, not hardcoded `localhost`)
 
 ## Key conventions
 - Element IDs generated with `nanoid`
 - Coordinates: world coordinates stored in elements; screen coords only in Canvas event handling
 - Shapes use `x, y, width, height` (top-left origin, not center)
 - No test framework, no linter configured yet
+- **Dark mode default colors**: pen and shape colors default to `#ffffff` (white) instead of `#000000` when the OS/browser prefers dark scheme (checked via `isDarkMode()` in `src/store/useStore.ts`)
